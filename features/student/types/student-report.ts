@@ -12,6 +12,7 @@ export type StudentReportRecord = {
   summary: string;
   submittedAt: string;
   status: StudentReportStatus;
+  reportScore?: number | null;
 };
 
 export type StudentReportUploadPayload = {

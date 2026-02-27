@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   supervisorScoreSchema,
   type SupervisorScoreSchema,
+  type SupervisorScoreSchemaInput,
 } from "@/features/supervisor/schemas/supervisor-score-schema";
 import {
   useSubmitSupervisorScoreMutation,
@@ -37,7 +38,7 @@ export function SupervisorScoreEntryForm({
   const studentQuery = useSupervisorStudentQuery(matricNumber);
   const submitMutation = useSubmitSupervisorScoreMutation();
 
-  const form = useForm<SupervisorScoreSchema>({
+  const form = useForm<SupervisorScoreSchemaInput, unknown, SupervisorScoreSchema>({
     resolver: zodResolver(supervisorScoreSchema),
     defaultValues: {
       score: 0,
@@ -108,7 +109,17 @@ export function SupervisorScoreEntryForm({
                 <FormItem>
                   <FormLabel>Supervision score</FormLabel>
                   <FormControl>
-                    <Input type="number" min={0} max={10} step={1} {...field} />
+                    <Input
+                      type="number"
+                      min={0}
+                      max={10}
+                      step={1}
+                      name={field.name}
+                      ref={field.ref}
+                      value={typeof field.value === "number" ? field.value : ""}
+                      onBlur={field.onBlur}
+                      onChange={(event) => field.onChange(event.target.value)}
+                    />
                   </FormControl>
                   <FormDescription>Allowed range is 0 to 10.</FormDescription>
                   <FormMessage />

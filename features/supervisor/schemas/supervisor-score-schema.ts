@@ -13,4 +13,5 @@ export const supervisorScoreSchema = z.object({
 });
 
 export type SupervisorSearchSchema = z.infer<typeof supervisorSearchSchema>;
+export type SupervisorScoreSchemaInput = z.input<typeof supervisorScoreSchema>;
 export type SupervisorScoreSchema = z.infer<typeof supervisorScoreSchema>;

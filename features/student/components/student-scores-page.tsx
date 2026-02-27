@@ -1,11 +1,5 @@
-import { FeaturePlaceholder } from "@/components/ui/feature-placeholder";
+import { StudentScoresBreakdown } from "@/features/student/components/student-scores-breakdown";
 
 export function StudentScoresPageView() {
-  return (
-    <FeaturePlaceholder
-      eyebrow="Score breakdown"
-      title="Score visibility route scaffolded"
-      description="This page will display report, supervisor, logbook, presentation, and final totals."
-    />
-  );
+  return <StudentScoresBreakdown />;
 }

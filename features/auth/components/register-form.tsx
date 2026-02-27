@@ -50,11 +50,14 @@ export function RegisterForm() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      const result = await toast.promise(registerMutation.mutateAsync(values), {
+      const registrationPromise = registerMutation.mutateAsync(values);
+
+      await toast.promise(registrationPromise, {
         loading: "Creating account...",
         success: (data) => data.message,
         error: "Unable to complete registration.",
       });
+      const result = await registrationPromise;
 
       if (result.redirectTo) {
         router.push(result.redirectTo);

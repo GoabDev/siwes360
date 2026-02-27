@@ -7,6 +7,7 @@ import type {
   StudentReportRecord,
   StudentReportUploadPayload,
 } from "@/features/student/types/student-report";
+import { withDerivedReportProgress } from "@/features/student/utils/report-progress";
 
 const STORAGE_KEY = "siwes360-student-report";
 
@@ -29,7 +30,7 @@ export async function getStudentReport(): Promise<StudentReportRecord | null> {
   }
 
   const value = window.localStorage.getItem(STORAGE_KEY);
-  return value ? (JSON.parse(value) as StudentReportRecord) : null;
+  return value ? withDerivedReportProgress(JSON.parse(value) as StudentReportRecord) : null;
 }
 
 export async function uploadStudentReport(
@@ -63,6 +64,7 @@ export async function uploadStudentReport(
     summary: payload.summary,
     submittedAt: new Date().toISOString(),
     status: "uploaded",
+    reportScore: null,
   };
 
   if (typeof window !== "undefined") {
@@ -71,6 +73,6 @@ export async function uploadStudentReport(
 
   return {
     message: "Report uploaded into local mock storage. Backend upload will replace this service later.",
-    report,
+    report: withDerivedReportProgress(report),
   };
 }
