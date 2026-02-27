@@ -78,8 +78,15 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
 
   await wait(1100);
 
+  if (payload.role === "student") {
+    return {
+      message: `Student registration captured for ${payload.matricNumber} in ${payload.department}. Backend student onboarding will plug into this service next.`,
+      redirectTo: "/auth/login",
+    };
+  }
+
   return {
-    message: `Registration form is ready for ${payload.role} onboarding. Backend registration will plug into this service next.`,
+    message: "Supervisor onboarding details captured. Backend access rules can replace this temporary flow later.",
     redirectTo: "/auth/login",
   };
 }

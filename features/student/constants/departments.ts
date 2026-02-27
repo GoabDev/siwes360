@@ -1,11 +1,11 @@
 export const departments = [
+  "Biomedical Engineering",
+  "Computer Engineering",
+  "Civil Engineering",
   "Computer Science",
-  "Information Technology",
-  "Cyber Security",
-  "Software Engineering",
   "Electrical Engineering",
   "Mechanical Engineering",
-  "Accounting",
-  "Business Administration",
-  "Mass Communication",
+  "Mechatronics Engineering",
+  "Telecommunications Engineering",
+  "Information Technology",
 ];
