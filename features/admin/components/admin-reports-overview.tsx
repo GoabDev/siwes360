@@ -14,7 +14,7 @@ export function AdminReportsOverview() {
     );
   }
 
-  const students = studentsQuery.data ?? [];
+  const students = studentsQuery.data?.items ?? [];
   const reportReady = students.filter((student) => student.reportScore !== null).length;
   const fullyComplete = students.filter((student) => student.status === "complete").length;
 

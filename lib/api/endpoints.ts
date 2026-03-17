@@ -4,13 +4,18 @@ export const apiEndpoints = {
     register: "/api/Authentication/register",
     refresh: "/api/Authentication/refresh",
     revoke: "/api/Authentication/revoke",
+    inviteSupervisor: "/api/Authentication/invite-supervisor",
     forgotPassword: "/auth/forgot-password",
   },
   department: {
+    root: "/api/Department",
     all: "/api/Department/all",
   },
   userProfile: {
     me: "/api/UserProfile/me",
+    students: "/api/UserProfile/students",
+    supervisors: "/api/UserProfile/supervisors",
+    administrators: "/api/UserProfile/administrators",
   },
   photo: {
     upload: "/api/Photo/upload",

@@ -1,8 +1,6 @@
 "use client";
 
 import { useDeferredValue, useState } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -11,34 +9,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { SurfaceCard } from "@/components/ui/surface-card";
-import { useAdminStudentsQuery } from "@/features/admin/queries/admin-student-queries";
+import { useAdminAdministratorsQuery } from "@/features/admin/queries/admin-administrator-queries";
 
-function scoreValue(value: number | null, max: number) {
-  return value === null ? `Pending / ${max}` : `${value} / ${max}`;
-}
-
-export function AdminStudentsTable() {
+export function AdminAdministratorsTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const deferredSearchTerm = useDeferredValue(searchTerm);
-  const studentsQuery = useAdminStudentsQuery({
+  const administratorsQuery = useAdminAdministratorsQuery({
     pageNumber,
     pageSize,
     searchTerm: deferredSearchTerm,
   });
 
-  if (studentsQuery.isLoading) {
+  if (administratorsQuery.isLoading) {
     return (
       <SurfaceCard>
-        <p className="text-sm text-muted">Loading department students...</p>
+        <p className="text-sm text-muted">Loading administrators...</p>
       </SurfaceCard>
     );
   }
 
-  if (!studentsQuery.data?.items.length) {
+  const data = administratorsQuery.data;
+
+  if (!data?.items.length) {
     return (
       <SurfaceCard className="space-y-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -48,7 +43,7 @@ export function AdminStudentsTable() {
               setSearchTerm(event.target.value);
               setPageNumber(1);
             }}
-            placeholder="Search by name, matric number, or department"
+            placeholder="Search by email or department"
             className="max-w-xl"
           />
           <div className="flex items-center gap-2 text-sm text-muted">
@@ -73,7 +68,7 @@ export function AdminStudentsTable() {
             </Select>
           </div>
         </div>
-        <p className="text-sm text-muted">No students are currently available for this department.</p>
+        <p className="text-sm text-muted">No administrators are currently available for this view.</p>
       </SurfaceCard>
     );
   }
@@ -87,12 +82,12 @@ export function AdminStudentsTable() {
             setSearchTerm(event.target.value);
             setPageNumber(1);
           }}
-          placeholder="Search by name, matric number, or department"
+          placeholder="Search by email or department"
           className="max-w-xl"
         />
         <div className="flex items-center gap-3 text-sm text-muted">
           <span>
-            Showing {studentsQuery.data.items.length} of {studentsQuery.data.totalCount}
+            Showing {data.items.length} of {data.totalCount}
           </span>
           <div className="flex items-center gap-2">
             <span>Rows</span>
@@ -117,83 +112,49 @@ export function AdminStudentsTable() {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-[1.2fr_0.85fr_0.8fr_0.65fr_0.7fr_0.7fr_0.75fr_0.7fr_0.8fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
-        <span>Name</span>
-        <span>Matric</span>
-        <span>Status</span>
-        <span>Report</span>
-        <span>Supervisor</span>
-        <span>Logbook</span>
-        <span>Presentation</span>
-        <span>Total</span>
-        <span>Action</span>
+
+      <div className="grid grid-cols-[1.1fr_1.3fr_1fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
+        <span>Administrator</span>
+        <span>Email</span>
+        <span>Department</span>
       </div>
       <div className="divide-y divide-border/60">
-        {studentsQuery.data.items.map((student) => (
+        {data.items.map((administrator) => (
           <div
-            key={student.matricNumber}
-            className="grid grid-cols-[1.2fr_0.85fr_0.8fr_0.65fr_0.7fr_0.7fr_0.75fr_0.7fr_0.8fr] gap-4 px-5 py-4 text-sm"
+            key={administrator.id}
+            className="grid grid-cols-[1.1fr_1.3fr_1fr] gap-4 px-5 py-4 text-sm"
           >
             <div>
-              <p className="font-medium">{student.fullName}</p>
-              <p className="mt-1 text-xs text-muted">{student.department}</p>
+              <p className="font-medium">{administrator.fullName}</p>
+              <p className="mt-1 text-xs text-muted">{administrator.id}</p>
             </div>
-            <span className="text-muted">{student.matricNumber}</span>
-            <div className="flex items-start">
-              <StatusBadge
-                label={student.status}
-                variant={
-                  student.status === "complete"
-                    ? "success"
-                    : student.status === "ready"
-                      ? "warning"
-                      : "pending"
-                }
-              />
-            </div>
-            <span>{scoreValue(student.reportScore, 30)}</span>
-            <span>{scoreValue(student.supervisorScore, 10)}</span>
-            <span>{scoreValue(student.logbookScore, 30)}</span>
-            <span>{scoreValue(student.presentationScore, 30)}</span>
-            <span>{student.totalScore === null ? "Incomplete" : `${student.totalScore} / 100`}</span>
-            <Button asChild size="sm" variant="outline">
-              <Link href={`/admin/score-entry/${encodeURIComponent(student.matricNumber)}`}>
-                {student.logbookScore !== null || student.presentationScore !== null ? "Edit" : "Grade"}
-              </Link>
-            </Button>
+            <span className="text-muted">{administrator.email}</span>
+            <span>{administrator.department}</span>
           </div>
         ))}
       </div>
+
       <div className="flex flex-col gap-3 border-t border-border/70 px-5 py-4 md:flex-row md:items-center md:justify-between">
         <p className="text-sm text-muted">
-          Page {studentsQuery.data.pageNumber} of {studentsQuery.data.totalPages}
+          Page {data.pageNumber} of {data.totalPages}
         </p>
         <div className="flex items-center gap-2">
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="sm"
+            className="inline-flex h-9 items-center justify-center rounded-xl border border-border bg-surface px-4 text-sm font-medium transition hover:border-brand disabled:pointer-events-none disabled:opacity-50"
             onClick={() => setPageNumber((value) => Math.max(1, value - 1))}
-            disabled={studentsQuery.data.pageNumber <= 1 || studentsQuery.isFetching}
+            disabled={!data.hasPreviousPage || administratorsQuery.isFetching}
           >
             Previous
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setPageNumber((value) =>
-                Math.min(studentsQuery.data.totalPages, value + 1),
-              )
-            }
-            disabled={
-              studentsQuery.data.pageNumber >= studentsQuery.data.totalPages ||
-              studentsQuery.isFetching
-            }
+            className="inline-flex h-9 items-center justify-center rounded-xl border border-border bg-surface px-4 text-sm font-medium transition hover:border-brand disabled:pointer-events-none disabled:opacity-50"
+            onClick={() => setPageNumber((value) => value + 1)}
+            disabled={!data.hasNextPage || administratorsQuery.isFetching}
           >
             Next
-          </Button>
+          </button>
         </div>
       </div>
     </SurfaceCard>

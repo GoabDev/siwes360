@@ -7,12 +7,12 @@ import { useAdminStudentsQuery } from "@/features/admin/queries/admin-student-qu
 
 export function AdminDashboardView() {
   const studentsQuery = useAdminStudentsQuery();
-  const students = studentsQuery.data ?? [];
+  const students = studentsQuery.data?.items ?? [];
 
   const stats = [
     {
       label: "Department students",
-      value: `${students.length}`,
+      value: `${studentsQuery.data?.totalCount ?? students.length}`,
       detail: "Students currently available in this department grading workspace.",
     },
     {

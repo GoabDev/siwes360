@@ -2,6 +2,7 @@
 
 import {
   ClipboardCheck,
+  Building2,
   FileClock,
   Files,
   LayoutDashboard,
@@ -25,6 +26,9 @@ const iconMap = {
   scores: ClipboardCheck,
   search: Search,
   students: Users,
+  supervisors: Users,
+  administrators: Users,
+  departments: Building2,
   settings: Settings2,
 } as const;
 

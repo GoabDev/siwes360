@@ -10,6 +10,20 @@ export type AdminStudentRecord = {
   status: "incomplete" | "ready" | "complete";
 };
 
+export type AdminStudentsQueryParams = {
+  pageNumber?: number;
+  pageSize?: number;
+  searchTerm?: string;
+};
+
+export type PaginatedAdminStudents = {
+  items: AdminStudentRecord[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+};
+
 export type AdminScoreRecord = {
   matricNumber: string;
   logbookScore: number;

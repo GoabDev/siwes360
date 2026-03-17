@@ -6,14 +6,15 @@ import {
   getAdminStudents,
   submitAdminScores,
 } from "@/features/admin/services/admin-student-service";
+import type { AdminStudentsQueryParams } from "@/features/admin/types/admin-students";
 
-export const adminStudentsKey = ["admin-students"];
+export const adminStudentsKey = (params?: AdminStudentsQueryParams) => ["admin-students", params];
 export const adminStudentKey = (matricNumber: string) => ["admin-student", matricNumber];
 
-export function useAdminStudentsQuery() {
+export function useAdminStudentsQuery(params?: AdminStudentsQueryParams) {
   return useQuery({
-    queryKey: adminStudentsKey,
-    queryFn: getAdminStudents,
+    queryKey: adminStudentsKey(params),
+    queryFn: () => getAdminStudents(params),
   });
 }
 
@@ -31,7 +32,7 @@ export function useSubmitAdminScoresMutation() {
   return useMutation({
     mutationFn: submitAdminScores,
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: adminStudentsKey });
+      await queryClient.invalidateQueries({ queryKey: ["admin-students"] });
       await queryClient.invalidateQueries({ queryKey: adminStudentKey(variables.matricNumber) });
     },
   });

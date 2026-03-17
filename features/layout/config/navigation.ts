@@ -6,6 +6,9 @@ export type NavigationIcon =
   | "scores"
   | "search"
   | "students"
+  | "supervisors"
+  | "administrators"
+  | "departments"
   | "settings";
 
 export type NavigationItem = {
@@ -32,6 +35,9 @@ export const roleNavigation: Record<"student" | "supervisor" | "admin", Navigati
     { href: "/admin", label: "Dashboard", icon: "dashboard" },
     { href: "/admin/profile", label: "Profile", icon: "profile" },
     { href: "/admin/students", label: "Students", icon: "students" },
+    { href: "/admin/supervisors", label: "Supervisors", icon: "supervisors" },
+    { href: "/admin/administrators", label: "Administrators", icon: "administrators" },
+    { href: "/admin/departments", label: "Departments", icon: "departments" },
     { href: "/admin/reports", label: "Reports", icon: "upload" },
     { href: "/admin/settings", label: "Settings", icon: "settings" },
   ],
