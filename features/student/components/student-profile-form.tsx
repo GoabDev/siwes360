@@ -1,9 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -34,6 +36,8 @@ import {
   useStudentProfileQuery,
   useUpdateStudentProfileMutation,
 } from "@/features/student/queries/student-profile-queries";
+import { getApiErrorMessage } from "@/lib/api/error";
+import type { UpdateStudentProfilePayload } from "@/features/student/types/student-profile";
 
 const defaultValues: StudentProfileSchema = {
   fullName: "",
@@ -48,9 +52,25 @@ const defaultValues: StudentProfileSchema = {
   bio: "",
 };
 
+function getInitials(name: string) {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (parts.length === 0) {
+    return "ST";
+  }
+
+  return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
+}
+
 export function StudentProfileForm() {
   const profileQuery = useStudentProfileQuery();
   const updateProfileMutation = useUpdateStudentProfileMutation();
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<StudentProfileSchema>({
     resolver: zodResolver(studentProfileSchema),
@@ -63,13 +83,41 @@ export function StudentProfileForm() {
     }
   }, [form, profileQuery.data]);
 
+  const previewImageUrl = useMemo(() => {
+    if (!selectedImageFile) {
+      return profileQuery.data?.imageUrl || "";
+    }
+
+    return URL.createObjectURL(selectedImageFile);
+  }, [profileQuery.data?.imageUrl, selectedImageFile]);
+
+  useEffect(() => {
+    if (!selectedImageFile || !previewImageUrl.startsWith("blob:")) {
+      return;
+    }
+
+    return () => {
+      URL.revokeObjectURL(previewImageUrl);
+    };
+  }, [previewImageUrl, selectedImageFile]);
+
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      await toast.promise(updateProfileMutation.mutateAsync(values), {
+      const payload: UpdateStudentProfilePayload = {
+        ...values,
+        id: profileQuery.data?.id,
+        email: profileQuery.data?.email,
+        imageUrl: profileQuery.data?.imageUrl,
+        imageFile: selectedImageFile,
+      };
+
+      await toast.promise(updateProfileMutation.mutateAsync(payload), {
         loading: "Saving student profile...",
         success: (data) => data.message,
-        error: "Unable to save student profile.",
+        error: (error) => getApiErrorMessage(error, "Unable to save student profile."),
       });
+
+      setSelectedImageFile(null);
     } catch {
       return;
     }
@@ -78,23 +126,73 @@ export function StudentProfileForm() {
   return (
     <section className="space-y-6">
       <div className="rounded-[2rem] border border-border/80 bg-[linear-gradient(135deg,_rgba(31,107,79,0.12),_rgba(215,155,44,0.12))] p-6">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand">
-          Student profile
-        </p>
-        <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-          Complete your SIWES identity and placement details
-        </h2>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">
-          This form is built against the data shape the rest of the student flow depends on,
-          so upload, report status, and scoring screens can rely on it later.
-        </p>
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Avatar className="h-20 w-20 border border-white/50 shadow-sm">
+                {previewImageUrl ? (
+                  <AvatarImage
+                    src={previewImageUrl}
+                    alt={profileQuery.data?.fullName || form.getValues("fullName") || "Student profile"}
+                  />
+                ) : (
+                  <AvatarFallback className="bg-brand/15 text-xl text-brand">
+                    {getInitials(profileQuery.data?.fullName ?? form.getValues("fullName"))}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  setSelectedImageFile(file);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-brand text-white shadow-sm transition hover:bg-brand-strong"
+                aria-label="Change profile image"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand">
+                Student profile
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+                Complete your SIWES identity and placement details
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
+                This form keeps the existing workplace details while the backend now supplies the
+                core student identity data.
+              </p>
+            </div>
+          </div>
+          <div className="rounded-[1.5rem] border border-white/50 bg-white/55 px-4 py-3 text-sm text-foreground/90 backdrop-blur">
+            <p className="font-medium">{profileQuery.data?.fullName || "Student profile"}</p>
+            <p className="mt-1 text-muted">{profileQuery.data?.email || "Email not available"}</p>
+            <p className="mt-1 text-muted">{profileQuery.data?.department || "Department not set"}</p>
+            <p className="mt-1 text-muted">
+              {selectedImageFile
+                ? `Ready to upload: ${selectedImageFile.name}`
+                : profileQuery.data?.imageUrl
+                  ? "Profile image already attached to this account."
+                  : "Tap the plus icon to add a profile image."}
+            </p>
+          </div>
+        </div>
       </div>
 
       <SurfaceCard className="space-y-5">
         {profileQuery.isLoading ? (
           <div className="space-y-3 text-sm text-muted">
             <p>Loading student profile...</p>
-            <p>Using a mock response until the backend profile endpoint is ready.</p>
+            <p>Fetching your identity record from the live backend profile endpoint.</p>
           </div>
         ) : null}
 
@@ -272,8 +370,8 @@ export function StudentProfileForm() {
             />
 
             <div className="flex flex-col gap-2.5 rounded-[1.25rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
-              <p>This form currently reads and writes mock data through the same query and service layers that will handle the live backend integration.</p>
-              <p>When your backend is ready, only the service implementation needs to change.</p>
+              <p>Identity details now load from the live user profile endpoint.</p>
+              <p>Name and profile image now update through the live backend endpoint. Workplace and SIWES details still remain frontend-managed for now.</p>
             </div>
 
             <Button

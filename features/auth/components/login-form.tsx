@@ -1,12 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Form,
   FormControl,
@@ -15,12 +17,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { createMockSessionAction } from "@/features/auth/actions/auth-session-actions";
+import { createSessionAction } from "@/features/auth/actions/auth-session-actions";
 import { useLoginMutation } from "@/features/auth/queries/use-auth-mutations";
-import { loginSchema, type LoginSchema } from "@/features/auth/schemas/auth-schemas";
+import {
+  loginSchema,
+  type LoginSchema,
+} from "@/features/auth/schemas/auth-schemas";
+import { getApiErrorMessage } from "@/lib/api/error";
 import { useAuthSession } from "@/providers/auth-session-provider";
 
 export function LoginForm() {
+  const router = useRouter();
   const loginMutation = useLoginMutation();
   const { signIn } = useAuthSession();
   const [isRedirecting, startTransition] = useTransition();
@@ -35,19 +42,31 @@ export function LoginForm() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      await toast.promise(loginMutation.mutateAsync(values), {
+      const loginPromise = loginMutation.mutateAsync(values);
+
+      await toast.promise(loginPromise, {
         loading: "Signing you in...",
         success: (data) => data.message,
-        error: "Unable to complete sign in.",
+        error: (error) => getApiErrorMessage(error, "Unable to complete sign in."),
       });
 
+      const result = await loginPromise;
+
+      if (!result.role) {
+        throw new Error("Login response did not include a user role.");
+      }
+
+      const authenticatedRole = result.role;
+
       startTransition(async () => {
-        const sessionResult = await createMockSessionAction({
-          identifier: values.identifier,
+        const sessionResult = await createSessionAction({
+          role: authenticatedRole,
+          token: result.token,
+          refreshToken: result.refreshToken,
         });
 
-        signIn(sessionResult.role, sessionResult.token);
-        window.location.href = sessionResult.redirectTo;
+        signIn(sessionResult.role, sessionResult.token, sessionResult.refreshToken);
+        router.push(result.redirectTo ?? sessionResult.redirectTo);
       });
     } catch {
       return;
@@ -80,17 +99,19 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="Enter your password" {...field} />
+                <PasswordInput placeholder="Enter your password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <div className="rounded-2xl border border-border bg-background/60 p-4">
-          <Label className="text-xs uppercase tracking-[0.2em] text-muted">Mock role hints</Label>
+          <Label className="text-xs uppercase tracking-[0.2em] text-muted">
+            Login
+          </Label>
           <p className="mt-2 text-sm text-muted">
-            Use an identifier containing <span className="font-medium text-foreground">admin</span>
-            {" "}or <span className="font-medium text-foreground">supervisor</span> to test protected redirects before the backend is ready.
+            Sign in with your email, staff ID, or matric number. Redirect is now
+            based on the authenticated role returned by the backend.
           </p>
         </div>
         <Button
@@ -98,7 +119,9 @@ export function LoginForm() {
           disabled={loginMutation.isPending || isRedirecting}
           className="w-full"
         >
-          {loginMutation.isPending || isRedirecting ? "Signing in..." : "Sign in"}
+          {loginMutation.isPending || isRedirecting
+            ? "Signing in..."
+            : "Sign in"}
         </Button>
       </form>
     </Form>

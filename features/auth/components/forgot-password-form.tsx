@@ -18,6 +18,7 @@ import {
   forgotPasswordSchema,
   type ForgotPasswordSchema,
 } from "@/features/auth/schemas/auth-schemas";
+import { getApiErrorMessage } from "@/lib/api/error";
 
 export function ForgotPasswordForm() {
   const forgotPasswordMutation = useForgotPasswordMutation();
@@ -34,7 +35,7 @@ export function ForgotPasswordForm() {
       await toast.promise(forgotPasswordMutation.mutateAsync(values), {
         loading: "Sending reset instructions...",
         success: (data) => data.message,
-        error: "Unable to send reset instructions.",
+        error: (error) => getApiErrorMessage(error, "Unable to send reset instructions."),
       });
     } catch {
       return;

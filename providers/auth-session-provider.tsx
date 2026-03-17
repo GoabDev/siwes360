@@ -20,12 +20,13 @@ import {
 type AuthSessionState = {
   role: UserRole | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   isHydrated: boolean;
 };
 
 type AuthSessionContextValue = AuthSessionState & {
-  signIn: (role: UserRole, token?: string) => void;
+  signIn: (role: UserRole, token?: string, refreshToken?: string) => void;
   signOut: () => void;
 };
 
@@ -42,8 +43,8 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     getServerSessionSnapshot,
   );
 
-  const signIn = useCallback((role: UserRole, token?: string) => {
-    persistSession(role, token);
+  const signIn = useCallback((role: UserRole, token?: string, refreshToken?: string) => {
+    persistSession(role, token, refreshToken);
   }, []);
 
   const signOut = useCallback(() => {
@@ -54,12 +55,13 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     () => ({
       role: snapshot.role,
       token: snapshot.token,
+      refreshToken: snapshot.refreshToken,
       isAuthenticated: Boolean(snapshot.role),
       isHydrated: true,
       signIn,
       signOut,
     }),
-    [snapshot.role, snapshot.token, signIn, signOut],
+    [snapshot.refreshToken, snapshot.role, snapshot.token, signIn, signOut],
   );
 
   return <AuthSessionContext.Provider value={value}>{children}</AuthSessionContext.Provider>;

@@ -1,49 +1,31 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { AUTH_ROLE_COOKIE, type UserRole } from "@/lib/auth/session-config";
+import {
+  AUTH_ROLE_COOKIE,
+  getRoleHome,
+  type UserRole,
+} from "@/lib/auth/session-config";
 
-type CreateMockSessionInput = {
-  identifier: string;
+type CreateSessionInput = {
+  role: UserRole;
+  token?: string;
+  refreshToken?: string;
 };
 
 type SessionActionResult = {
   role: UserRole;
   redirectTo: string;
   token: string;
+  refreshToken: string;
   message: string;
 };
 
-function inferRoleFromIdentifier(identifier: string): UserRole {
-  const normalizedIdentifier = identifier.toLowerCase();
-
-  if (normalizedIdentifier.includes("admin")) {
-    return "admin";
-  }
-
-  if (normalizedIdentifier.includes("supervisor")) {
-    return "supervisor";
-  }
-
-  return "student";
-}
-
-function getRoleRedirect(role: UserRole) {
-  if (role === "admin") {
-    return "/admin";
-  }
-
-  if (role === "supervisor") {
-    return "/supervisor";
-  }
-
-  return "/student";
-}
-
-export async function createMockSessionAction({
-  identifier,
-}: CreateMockSessionInput): Promise<SessionActionResult> {
-  const role = inferRoleFromIdentifier(identifier);
+export async function createSessionAction({
+  role,
+  token,
+  refreshToken,
+}: CreateSessionInput): Promise<SessionActionResult> {
   const cookieStore = await cookies();
 
   cookieStore.set(AUTH_ROLE_COOKIE, role, {
@@ -55,13 +37,14 @@ export async function createMockSessionAction({
 
   return {
     role,
-    redirectTo: getRoleRedirect(role),
-    token: `mock-token-${role}`,
-    message: `Dummy ${role} session created. Redirecting to the ${role} workspace.`,
+    redirectTo: getRoleHome(role),
+    token: token ?? "",
+    refreshToken: refreshToken ?? "",
+    message: `${role} session created.`,
   };
 }
 
-export async function clearMockSessionAction() {
+export async function clearSessionAction() {
   const cookieStore = await cookies();
   cookieStore.delete(AUTH_ROLE_COOKIE);
 }

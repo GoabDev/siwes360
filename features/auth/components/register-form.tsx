@@ -5,9 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SurfaceCard } from "@/components/ui/surface-card";
-import { AdminAccessCard } from "@/features/auth/components/admin-access-card";
-import { StudentRegisterForm } from "@/features/auth/components/student-register-form";
-import { SupervisorOnboardingForm } from "@/features/auth/components/supervisor-onboarding-form";
+import { AccountRegisterForm } from "@/features/auth/components/account-register-form";
 
 type RegistrationRole = "student" | "supervisor" | "admin";
 
@@ -28,14 +26,14 @@ const roleCards: Array<{
     role: "supervisor",
     title: "Supervisor",
     description:
-      "Use the temporary supervisor onboarding flow while final backend access rules are still being finalized.",
+      "Register a supervisor account and attach it to the correct department.",
     icon: ShieldCheck,
   },
   {
     role: "admin",
     title: "Admin",
     description:
-      "Admin accounts are pre-created, so this route only explains access rather than allowing public self-registration.",
+      "Register an administrator account for a specific department.",
     icon: UserCog,
   },
 ];
@@ -50,7 +48,7 @@ export function RegisterForm() {
           <SectionHeading
             eyebrow="Role-aware onboarding"
             title="Choose the type of account you need to access"
-            description="Registration is no longer treated as a fully generic flow. Student onboarding follows the project document directly, while supervisor and admin access reflect the current frontend-only assumptions."
+            description="All registration flows now target the live backend authentication endpoint, with role-specific fields handled in the form."
           />
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
@@ -96,9 +94,7 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-5">
-        {selectedRole === "student" ? <StudentRegisterForm /> : null}
-        {selectedRole === "supervisor" ? <SupervisorOnboardingForm /> : null}
-        {selectedRole === "admin" ? <AdminAccessCard /> : null}
+        <AccountRegisterForm role={selectedRole} />
       </div>
     </div>
   );

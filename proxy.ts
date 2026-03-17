@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import {
   AUTH_ROLE_COOKIE,
+  isAuthPathAllowedWhenAuthenticated,
   getRequiredRoleForPath,
   getRoleHome,
   isAuthPath,
@@ -13,7 +14,7 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const role = parseUserRole(request.cookies.get(AUTH_ROLE_COOKIE)?.value);
 
-  if (isAuthPath(pathname) && role) {
+  if (isAuthPath(pathname) && role && !isAuthPathAllowedWhenAuthenticated(pathname)) {
     return NextResponse.redirect(new URL(getRoleHome(role), request.url));
   }
 

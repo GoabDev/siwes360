@@ -5,28 +5,34 @@ export type LoginPayload = {
   password: string;
 };
 
-export type StudentRegisterPayload = {
+type RegisterPayloadBase = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  departmentId: string;
+  password: string;
+  confirmPassword: string;
+};
+
+export type StudentRegisterPayload = RegisterPayloadBase & {
   role: "student";
-  fullName: string;
-  email: string;
-  matricNumber: string;
-  department: string;
-  password: string;
-  confirmPassword: string;
+  matricNo: string;
 };
 
-export type SupervisorOnboardingPayload = {
+export type SupervisorRegisterPayload = RegisterPayloadBase & {
   role: "supervisor";
-  fullName: string;
-  email: string;
-  staffId: string;
-  phoneNumber: string;
-  organization: string;
-  password: string;
-  confirmPassword: string;
+  matricNo?: string;
 };
 
-export type RegisterPayload = StudentRegisterPayload | SupervisorOnboardingPayload;
+export type AdminRegisterPayload = RegisterPayloadBase & {
+  role: "admin";
+  matricNo?: string;
+};
+
+export type RegisterPayload =
+  | StudentRegisterPayload
+  | SupervisorRegisterPayload
+  | AdminRegisterPayload;
 
 export type ForgotPasswordPayload = {
   email: string;
@@ -37,4 +43,5 @@ export type AuthResponse = {
   redirectTo?: string;
   role?: AuthRole;
   token?: string;
+  refreshToken?: string;
 };

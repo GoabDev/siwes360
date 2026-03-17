@@ -1,7 +1,44 @@
 import { apiClient } from "@/lib/api/client";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
-import type { StudentProfile } from "@/features/student/types/student-profile";
+import type {
+  StudentProfile,
+  UpdateStudentProfilePayload,
+} from "@/features/student/types/student-profile";
+
+type UserProfileApiResponse = {
+  success?: boolean;
+  message?: string;
+  data?: {
+    id: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+    matricNo: string;
+    imageUrl?: string | null;
+    role: string;
+    departmentName: string;
+  } | null;
+};
+
+type UploadPhotoApiResponse = {
+  success?: boolean;
+  message?: string;
+  data?: {
+    publicId: string;
+    url: string;
+  } | null;
+};
+
+type UpdateUserProfileApiResponse = {
+  success?: boolean;
+  message?: string;
+  data?: {
+    firstname?: string;
+    lastname?: string;
+    imageUrl?: string | null;
+  } | null;
+};
 
 function wait(ms: number) {
   return new Promise((resolve) => {
@@ -10,9 +47,12 @@ function wait(ms: number) {
 }
 
 const mockProfile: StudentProfile = {
+  id: "mock-student-id",
+  email: "johnson.adebayo@example.com",
   fullName: "Johnson Adebayo",
   matricNumber: "CSC/2021/014",
   department: "Computer Science",
+  imageUrl: "",
   phoneNumber: "08012345678",
   placementCompany: "Interswitch",
   placementAddress: "12 Marina Road, Lagos",
@@ -22,10 +62,58 @@ const mockProfile: StudentProfile = {
   bio: "400-level student currently attached to a fintech product team for SIWES placement.",
 };
 
+function mapUserProfileResponseToStudentProfile(
+  payload: NonNullable<UserProfileApiResponse["data"]>,
+): StudentProfile {
+  return {
+    id: payload.id,
+    email: payload.email,
+    fullName: `${payload.firstname} ${payload.lastname}`.trim(),
+    matricNumber: payload.matricNo,
+    department: payload.departmentName,
+    imageUrl: payload.imageUrl ?? "",
+    phoneNumber: "",
+    placementCompany: "",
+    placementAddress: "",
+    workplaceSupervisorName: "",
+    startDate: "",
+    endDate: "",
+    bio: "",
+  };
+}
+
+function splitFullName(fullName: string) {
+  const normalized = fullName.trim().replace(/\s+/g, " ");
+  const [firstName = "", ...rest] = normalized.split(" ");
+
+  return {
+    firstName,
+    lastName: rest.join(" ").trim(),
+  };
+}
+
+async function uploadProfilePhoto(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await apiClient.post<UploadPhotoApiResponse>(apiEndpoints.photo.upload, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data?.data?.url ?? "";
+}
+
 export async function getStudentProfile(): Promise<StudentProfile> {
   if (hasConfiguredApiBaseUrl()) {
-    const response = await apiClient.get<StudentProfile>(apiEndpoints.student.profile);
-    return response.data;
+    const response = await apiClient.get<UserProfileApiResponse>(apiEndpoints.userProfile.me);
+
+    if (response.data?.data) {
+      return mapUserProfileResponseToStudentProfile(response.data.data);
+    }
+
+    return mockProfile;
   }
 
   await wait(700);
@@ -33,19 +121,50 @@ export async function getStudentProfile(): Promise<StudentProfile> {
 }
 
 export async function updateStudentProfile(
-  payload: StudentProfile,
+  payload: UpdateStudentProfilePayload,
 ): Promise<{ message: string; profile: StudentProfile }> {
   if (hasConfiguredApiBaseUrl()) {
-    const response = await apiClient.put<{ message: string; profile: StudentProfile }>(
-      apiEndpoints.student.profile,
-      payload,
+    const { firstName, lastName } = splitFullName(payload.fullName);
+    const imageUrl = payload.imageFile ? await uploadProfilePhoto(payload.imageFile) : payload.imageUrl ?? "";
+    const formData = new FormData();
+
+    formData.append("Firstname", firstName);
+    formData.append("Lastname", lastName);
+
+    if (payload.imageFile) {
+      formData.append("Image", payload.imageFile);
+    }
+
+    const response = await apiClient.put<UpdateUserProfileApiResponse>(
+      apiEndpoints.userProfile.me,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
     );
-    return response.data;
+
+    const updatedFirstName = response.data?.data?.firstname ?? firstName;
+    const updatedLastName = response.data?.data?.lastname ?? lastName;
+
+    return {
+      message: response.data?.message?.trim() || "Profile updated successfully.",
+      profile: {
+        ...payload,
+        fullName: `${updatedFirstName} ${updatedLastName}`.trim(),
+        imageUrl: response.data?.data?.imageUrl ?? imageUrl,
+      },
+    };
   }
 
   await wait(950);
   return {
-    message: "Student profile saved locally. Live profile persistence will use the backend endpoint when available.",
-    profile: payload,
+    message:
+      "Student profile saved locally. Workplace profile update fields will move to the live backend once that contract is finalized.",
+    profile: {
+      ...payload,
+      imageUrl: payload.imageFile ? payload.imageUrl ?? "" : payload.imageUrl ?? "",
+    },
   };
 }

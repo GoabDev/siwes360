@@ -2,7 +2,9 @@ export type UserRole = "student" | "supervisor" | "admin";
 
 export const AUTH_ROLE_COOKIE = "siwes360-role";
 export const AUTH_TOKEN_STORAGE_KEY = "siwes360-access-token";
+export const AUTH_REFRESH_TOKEN_STORAGE_KEY = "siwes360-refresh-token";
 export const AUTH_PROTECTED_PREFIXES = ["/student", "/supervisor", "/admin"] as const;
+export const AUTH_ALLOWED_WHEN_AUTHENTICATED = ["/auth/logout"] as const;
 
 const roleHomeMap: Record<UserRole, string> = {
   student: "/student",
@@ -44,4 +46,8 @@ export function isProtectedPath(pathname: string) {
 
 export function isAuthPath(pathname: string) {
   return pathname.startsWith("/auth");
+}
+
+export function isAuthPathAllowedWhenAuthenticated(pathname: string) {
+  return AUTH_ALLOWED_WHEN_AUTHENTICATED.some((path) => pathname.startsWith(path));
 }

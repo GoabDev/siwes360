@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { departments } from "@/features/student/constants/departments";
 
 export const loginSchema = z.object({
   identifier: z
@@ -13,31 +12,41 @@ const passwordFields = {
   confirmPassword: z.string().min(8, "Confirm your password."),
 };
 
+const registerSchemaBase = {
+  firstName: z.string().min(2, "Enter your first name."),
+  lastName: z.string().min(2, "Enter your last name."),
+  email: z.email("Enter a valid email address."),
+  departmentId: z.uuid("Select your department."),
+  ...passwordFields,
+};
+
 export const studentRegisterSchema = z
   .object({
     role: z.literal("student"),
-    fullName: z.string().min(3, "Enter your full name."),
-    email: z.email("Enter a valid email address."),
-    matricNumber: z.string().min(5, "Enter a valid matric number."),
-    department: z.enum(departments as [string, ...string[]], {
-      error: "Select your department.",
-    }),
-    ...passwordFields,
+    ...registerSchemaBase,
+    matricNo: z.string().min(5, "Enter a valid matric number."),
   })
   .refine((value) => value.password === value.confirmPassword, {
     message: "Passwords do not match.",
     path: ["confirmPassword"],
   });
 
-export const supervisorOnboardingSchema = z
+export const supervisorRegisterSchema = z
   .object({
     role: z.literal("supervisor"),
-    fullName: z.string().min(3, "Enter your full name."),
-    email: z.email("Enter a valid email address."),
-    staffId: z.string().min(3, "Enter your staff ID."),
-    phoneNumber: z.string().min(7, "Enter a valid phone number."),
-    organization: z.string().min(2, "Enter your school, faculty, or organization."),
-    ...passwordFields,
+    ...registerSchemaBase,
+    matricNo: z.string().optional(),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+  });
+
+export const adminRegisterSchema = z
+  .object({
+    role: z.literal("admin"),
+    ...registerSchemaBase,
+    matricNo: z.string().optional(),
   })
   .refine((value) => value.password === value.confirmPassword, {
     message: "Passwords do not match.",
@@ -46,7 +55,8 @@ export const supervisorOnboardingSchema = z
 
 export const registerSchema = z.discriminatedUnion("role", [
   studentRegisterSchema,
-  supervisorOnboardingSchema,
+  supervisorRegisterSchema,
+  adminRegisterSchema,
 ]);
 
 export const forgotPasswordSchema = z.object({
@@ -56,5 +66,6 @@ export const forgotPasswordSchema = z.object({
 export type LoginSchema = z.infer<typeof loginSchema>;
 export type RegisterSchema = z.infer<typeof registerSchema>;
 export type StudentRegisterSchema = z.infer<typeof studentRegisterSchema>;
-export type SupervisorOnboardingSchema = z.infer<typeof supervisorOnboardingSchema>;
+export type SupervisorRegisterSchema = z.infer<typeof supervisorRegisterSchema>;
+export type AdminRegisterSchema = z.infer<typeof adminRegisterSchema>;
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;

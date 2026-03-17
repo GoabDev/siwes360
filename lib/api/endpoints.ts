@@ -1,8 +1,19 @@
 export const apiEndpoints = {
   auth: {
-    login: "/auth/login",
-    register: "/auth/register",
+    login: "/api/Authentication/login",
+    register: "/api/Authentication/register",
+    refresh: "/api/Authentication/refresh",
+    revoke: "/api/Authentication/revoke",
     forgotPassword: "/auth/forgot-password",
+  },
+  department: {
+    all: "/api/Department/all",
+  },
+  userProfile: {
+    me: "/api/UserProfile/me",
+  },
+  photo: {
+    upload: "/api/Photo/upload",
   },
   student: {
     profile: "/students/profile",

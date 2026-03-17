@@ -2,6 +2,7 @@
 
 import {
   AUTH_ROLE_COOKIE,
+  AUTH_REFRESH_TOKEN_STORAGE_KEY,
   AUTH_TOKEN_STORAGE_KEY,
   parseUserRole,
   type UserRole,
@@ -10,12 +11,14 @@ import {
 type SessionSnapshot = {
   role: UserRole | null;
   token: string | null;
+  refreshToken: string | null;
 };
 
 const listeners = new Set<() => void>();
 const emptySessionSnapshot: SessionSnapshot = {
   role: null,
   token: null,
+  refreshToken: null,
 };
 let cachedSessionSnapshot: SessionSnapshot = emptySessionSnapshot;
 
@@ -31,7 +34,7 @@ function emitChange() {
   listeners.forEach((listener) => listener());
 }
 
-export function persistSession(role: UserRole, token?: string) {
+export function persistSession(role: UserRole, token?: string, refreshToken?: string) {
   document.cookie = `${AUTH_ROLE_COOKIE}=${role}; path=/; max-age=${60 * 60 * 8}; samesite=lax`;
 
   if (token) {
@@ -40,22 +43,31 @@ export function persistSession(role: UserRole, token?: string) {
     window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
   }
 
+  if (refreshToken) {
+    window.localStorage.setItem(AUTH_REFRESH_TOKEN_STORAGE_KEY, refreshToken);
+  } else {
+    window.localStorage.removeItem(AUTH_REFRESH_TOKEN_STORAGE_KEY);
+  }
+
   emitChange();
 }
 
 export function clearSession() {
   document.cookie = `${AUTH_ROLE_COOKIE}=; path=/; max-age=0; samesite=lax`;
   window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  window.localStorage.removeItem(AUTH_REFRESH_TOKEN_STORAGE_KEY);
   emitChange();
 }
 
 export function getStoredSession(): SessionSnapshot {
   const role = parseUserRole(getCookieValue(AUTH_ROLE_COOKIE));
   const token = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+  const refreshToken = window.localStorage.getItem(AUTH_REFRESH_TOKEN_STORAGE_KEY);
 
   return {
     role,
     token,
+    refreshToken,
   };
 }
 
@@ -68,7 +80,8 @@ export function getSessionSnapshot(): SessionSnapshot {
 
   if (
     cachedSessionSnapshot.role === nextSnapshot.role &&
-    cachedSessionSnapshot.token === nextSnapshot.token
+    cachedSessionSnapshot.token === nextSnapshot.token &&
+    cachedSessionSnapshot.refreshToken === nextSnapshot.refreshToken
   ) {
     return cachedSessionSnapshot;
   }
