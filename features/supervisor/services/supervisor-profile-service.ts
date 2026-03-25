@@ -1,26 +1,101 @@
 import { apiClient } from "@/lib/api/client";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
-import type { SupervisorProfile } from "@/features/supervisor/types/supervisor-profile";
+import type {
+  SupervisorProfile,
+  UpdateSupervisorProfilePayload,
+} from "@/features/supervisor/types/supervisor-profile";
+
+type UserProfileApiResponse = {
+  success?: boolean;
+  message?: string;
+  data?: {
+    id: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+    matricNo: string;
+    imageUrl?: string | null;
+    role: string;
+    departmentName: string;
+  } | null;
+};
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const mockProfile: SupervisorProfile = {
+  id: "mock-supervisor-id",
   fullName: "Dr. Amina Yusuf",
-  staffId: "SUP-1042",
   email: "supervisor@example.com",
-  phoneNumber: "08098765432",
+  imageUrl: "",
   department: "Computer Science",
-  organization: "School of Computing",
-  bio: "Academic supervisor responsible for workplace assessment and SIWES evaluation follow-up.",
 };
+
+function mapUserProfileResponseToSupervisorProfile(
+  payload: NonNullable<UserProfileApiResponse["data"]>,
+): SupervisorProfile {
+  return {
+    id: payload.id,
+    fullName: `${payload.firstname} ${payload.lastname}`.trim(),
+    email: payload.email,
+    imageUrl: payload.imageUrl ?? "",
+    department: payload.departmentName,
+  };
+}
+
+type UploadPhotoApiResponse = {
+  success?: boolean;
+  message?: string;
+  data?: {
+    publicId: string;
+    url: string;
+  } | null;
+};
+
+type UpdateUserProfileApiResponse = {
+  success?: boolean;
+  message?: string;
+  data?: {
+    firstname?: string;
+    lastname?: string;
+    imageUrl?: string | null;
+  } | null;
+};
+
+function splitFullName(fullName: string) {
+  const normalized = fullName.trim().replace(/\s+/g, " ");
+  const [firstName = "", ...rest] = normalized.split(" ");
+
+  return {
+    firstName,
+    lastName: rest.join(" ").trim(),
+  };
+}
+
+async function uploadProfilePhoto(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await apiClient.post<UploadPhotoApiResponse>(apiEndpoints.photo.upload, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data?.data?.url ?? "";
+}
 
 export async function getSupervisorProfile(): Promise<SupervisorProfile> {
   if (hasConfiguredApiBaseUrl()) {
-    const response = await apiClient.get<SupervisorProfile>(apiEndpoints.supervisor.profile);
-    return response.data;
+    const response = await apiClient.get<UserProfileApiResponse>(apiEndpoints.userProfile.me);
+
+    if (response.data?.data) {
+      return mapUserProfileResponseToSupervisorProfile(response.data.data);
+    }
+
+    return mockProfile;
   }
 
   await wait(650);
@@ -28,19 +103,53 @@ export async function getSupervisorProfile(): Promise<SupervisorProfile> {
 }
 
 export async function updateSupervisorProfile(
-  payload: SupervisorProfile,
+  payload: UpdateSupervisorProfilePayload,
 ): Promise<{ message: string; profile: SupervisorProfile }> {
+  const profilePayload: SupervisorProfile = {
+    id: payload.id,
+    fullName: payload.fullName,
+    email: payload.email,
+    imageUrl: payload.imageUrl,
+    department: payload.department,
+  };
+
   if (hasConfiguredApiBaseUrl()) {
-    const response = await apiClient.put<{ message: string; profile: SupervisorProfile }>(
-      apiEndpoints.supervisor.profile,
-      payload,
+    const { firstName, lastName } = splitFullName(payload.fullName);
+    const imageUrl = payload.imageFile ? await uploadProfilePhoto(payload.imageFile) : payload.imageUrl ?? "";
+    const formData = new FormData();
+
+    formData.append("Firstname", firstName);
+    formData.append("Lastname", lastName);
+
+    if (payload.imageFile) {
+      formData.append("Image", payload.imageFile);
+    }
+
+    const response = await apiClient.put<UpdateUserProfileApiResponse>(
+      apiEndpoints.userProfile.me,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
     );
-    return response.data;
+    const updatedFirstName = response.data?.data?.firstname ?? firstName;
+    const updatedLastName = response.data?.data?.lastname ?? lastName;
+
+    return {
+      message: response.data?.message?.trim() || "Profile updated successfully.",
+      profile: {
+        ...profilePayload,
+        fullName: `${updatedFirstName} ${updatedLastName}`.trim(),
+        imageUrl: response.data?.data?.imageUrl ?? imageUrl,
+      },
+    };
   }
 
   await wait(900);
   return {
     message: "Supervisor profile saved locally. Live persistence will plug into the backend later.",
-    profile: payload,
+    profile: profilePayload,
   };
 }

@@ -3,6 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import {
   loginUser,
+  setPassword,
   registerUser,
   requestPasswordReset,
 } from "@/features/auth/services/auth-service";
@@ -22,5 +23,11 @@ export function useRegisterMutation() {
 export function useForgotPasswordMutation() {
   return useMutation({
     mutationFn: requestPasswordReset,
+  });
+}
+
+export function useSetPasswordMutation() {
+  return useMutation({
+    mutationFn: setPassword,
   });
 }

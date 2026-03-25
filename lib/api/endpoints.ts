@@ -6,6 +6,7 @@ export const apiEndpoints = {
     revoke: "/api/Authentication/revoke",
     inviteSupervisor: "/api/Authentication/invite-supervisor",
     forgotPassword: "/auth/forgot-password",
+    setPassword: "/api/Authentication/set-password",
   },
   department: {
     root: "/api/Department",

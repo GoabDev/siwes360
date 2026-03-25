@@ -3,6 +3,7 @@ import type {
   ForgotPasswordPayload,
   LoginPayload,
   RegisterPayload,
+  SetPasswordPayload,
 } from "@/features/auth/types/auth";
 import { apiClient } from "@/lib/api/client";
 import { apiEndpoints } from "@/lib/api/endpoints";
@@ -216,6 +217,37 @@ export async function requestPasswordReset(
 
   return {
     message: `Reset instructions would be sent to ${payload.email} once backend recovery is connected.`,
+  };
+}
+
+export async function setPassword(
+  payload: SetPasswordPayload,
+): Promise<AuthResponse> {
+  if (hasConfiguredApiBaseUrl()) {
+    const response = await apiClient.post<ApiEnvelope<AuthResponse> | AuthResponse>(
+      apiEndpoints.auth.setPassword,
+      {
+        userId: payload.userId,
+        token: payload.token,
+        newPassword: payload.password,
+      },
+    );
+    const { message, data } = unwrapEnvelope<AuthResponse>(response.data);
+
+    return {
+      ...data,
+      message:
+        getFallbackMessage(message, data?.message, "Password set successfully.") ??
+        "Password set successfully.",
+      redirectTo: data?.redirectTo ?? "/auth/login",
+    };
+  }
+
+  await wait(800);
+
+  return {
+    message: "Password created locally. Backend invite completion will replace this fallback.",
+    redirectTo: "/auth/login",
   };
 }
 

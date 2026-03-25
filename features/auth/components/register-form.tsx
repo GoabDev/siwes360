@@ -1,8 +1,7 @@
 "use client";
 
-import { GraduationCap, ShieldCheck, UserCog } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { AccountRegisterForm } from "@/features/auth/components/account-register-form";
@@ -22,20 +21,20 @@ const roleCards: Array<{
       "Register with your matric number and department so your record can be linked correctly.",
     icon: GraduationCap,
   },
-  {
-    role: "supervisor",
-    title: "Supervisor",
-    description:
-      "Register a supervisor account and attach it to the correct department.",
-    icon: ShieldCheck,
-  },
-  {
-    role: "admin",
-    title: "Admin",
-    description:
-      "Register an administrator account for a specific department.",
-    icon: UserCog,
-  },
+  // {
+  //   role: "supervisor",
+  //   title: "Supervisor",
+  //   description:
+  //     "Register a supervisor account and attach it to the correct department.",
+  //   icon: ShieldCheck,
+  // },
+  // {
+  //   role: "admin",
+  //   title: "Admin",
+  //   description:
+  //     "Register an administrator account for a specific department.",
+  //   icon: UserCog,
+  // },
 ];
 
 export function RegisterForm() {
@@ -48,7 +47,7 @@ export function RegisterForm() {
           <SectionHeading
             eyebrow="Role-aware onboarding"
             title="Choose the type of account you need to access"
-            description="All registration flows now target the live backend authentication endpoint, with role-specific fields handled in the form."
+            description="Student self-service registration is currently the only frontend signup flow exposed here."
           />
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
@@ -81,16 +80,10 @@ export function RegisterForm() {
           </div>
 
           <div className="rounded-[1.25rem] border border-border/70 bg-background/60 px-4 py-3 text-sm text-muted">
-            Students must register with their correct department because the project requires
-            their records to be linked to the corresponding departmental administrator.
+            Students must register with their correct department. Supervisors are onboarded by
+            invite, and admin accounts are created from the backend.
           </div>
         </SurfaceCard>
-
-        <div className="flex justify-start">
-          <Button type="button" variant="ghost" onClick={() => setSelectedRole("student")}>
-            Reset to student onboarding
-          </Button>
-        </div>
       </div>
 
       <div className="space-y-5">

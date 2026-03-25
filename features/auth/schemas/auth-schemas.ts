@@ -63,9 +63,22 @@ export const forgotPasswordSchema = z.object({
   email: z.email("Enter the email address linked to your account."),
 });
 
+export const setPasswordSchema = z
+  .object({
+    userId: z.uuid("Invite link is missing a valid user ID."),
+    token: z.string().min(1, "Invite link is missing a valid token."),
+    password: z.string().min(8, "Password must be at least 8 characters."),
+    confirmPassword: z.string().min(8, "Confirm your password."),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+  });
+
 export type LoginSchema = z.infer<typeof loginSchema>;
 export type RegisterSchema = z.infer<typeof registerSchema>;
 export type StudentRegisterSchema = z.infer<typeof studentRegisterSchema>;
 export type SupervisorRegisterSchema = z.infer<typeof supervisorRegisterSchema>;
 export type AdminRegisterSchema = z.infer<typeof adminRegisterSchema>;
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
+export type SetPasswordSchema = z.infer<typeof setPasswordSchema>;

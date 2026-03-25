@@ -38,6 +38,13 @@ export type ForgotPasswordPayload = {
   email: string;
 };
 
+export type SetPasswordPayload = {
+  userId: string;
+  token: string;
+  password: string;
+  confirmPassword: string;
+};
+
 export type AuthResponse = {
   message: string;
   redirectTo?: string;

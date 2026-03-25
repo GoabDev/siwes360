@@ -11,8 +11,8 @@ export function RegisterPageView() {
             Start the right SIWES 360 onboarding flow
           </h1>
           <p className="mt-4 text-base leading-7 text-muted">
-            Student registration, supervisor onboarding, and admin access do not follow the
-            same rules. This page now reflects those differences directly on the frontend.
+            Student registration is the only self-service signup flow shown here. Admin accounts
+            are created on the backend, while supervisors join through invites.
           </p>
         </div>
 

@@ -1,9 +1,11 @@
 export type SupervisorProfile = {
+  id?: string;
   fullName: string;
-  staffId: string;
-  email: string;
-  phoneNumber: string;
+  email?: string;
+  imageUrl?: string;
   department: string;
-  organization: string;
-  bio: string;
+};
+
+export type UpdateSupervisorProfilePayload = SupervisorProfile & {
+  imageFile?: File | null;
 };

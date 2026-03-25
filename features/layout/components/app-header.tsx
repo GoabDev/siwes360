@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { LogoutButton } from "@/features/auth/components/logout-button";
 
 type AppHeaderProps = {
@@ -19,12 +18,6 @@ export function AppHeader({ roleLabel, title, description }: AppHeaderProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="rounded-full border border-border px-4 py-2 text-sm text-muted transition hover:border-brand hover:text-brand"
-          >
-            Landing page
-          </Link>
           <LogoutButton />
         </div>
       </div>

@@ -1,21 +1,23 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import {
   supervisorProfileSchema,
   type SupervisorProfileSchema,
@@ -24,20 +26,34 @@ import {
   useSupervisorProfileQuery,
   useUpdateSupervisorProfileMutation,
 } from "@/features/supervisor/queries/supervisor-profile-queries";
+import { getApiErrorMessage } from "@/lib/api/error";
+import type { UpdateSupervisorProfilePayload } from "@/features/supervisor/types/supervisor-profile";
 
 const defaultValues: SupervisorProfileSchema = {
   fullName: "",
-  staffId: "",
   email: "",
-  phoneNumber: "",
   department: "",
-  organization: "",
-  bio: "",
 };
+
+function getInitials(name: string) {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (parts.length === 0) {
+    return "SP";
+  }
+
+  return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
+}
 
 export function SupervisorProfileForm() {
   const profileQuery = useSupervisorProfileQuery();
   const updateProfileMutation = useUpdateSupervisorProfileMutation();
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<SupervisorProfileSchema>({
     resolver: zodResolver(supervisorProfileSchema),
@@ -50,13 +66,41 @@ export function SupervisorProfileForm() {
     }
   }, [form, profileQuery.data]);
 
+  const previewImageUrl = useMemo(() => {
+    if (!selectedImageFile) {
+      return profileQuery.data?.imageUrl || "";
+    }
+
+    return URL.createObjectURL(selectedImageFile);
+  }, [profileQuery.data?.imageUrl, selectedImageFile]);
+
+  useEffect(() => {
+    if (!selectedImageFile || !previewImageUrl.startsWith("blob:")) {
+      return;
+    }
+
+    return () => {
+      URL.revokeObjectURL(previewImageUrl);
+    };
+  }, [previewImageUrl, selectedImageFile]);
+
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      await toast.promise(updateProfileMutation.mutateAsync(values), {
+      const payload: UpdateSupervisorProfilePayload = {
+        ...values,
+        id: profileQuery.data?.id,
+        email: profileQuery.data?.email,
+        imageUrl: profileQuery.data?.imageUrl,
+        imageFile: selectedImageFile,
+      };
+
+      await toast.promise(updateProfileMutation.mutateAsync(payload), {
         loading: "Saving supervisor profile...",
         success: (data) => data.message,
-        error: "Unable to save supervisor profile.",
+        error: (error) => getApiErrorMessage(error, "Unable to save supervisor profile."),
       });
+
+      setSelectedImageFile(null);
     } catch {
       return;
     }
@@ -65,82 +109,139 @@ export function SupervisorProfileForm() {
   return (
     <section className="space-y-6">
       <div className="rounded-[2rem] border border-border/80 bg-[linear-gradient(135deg,_rgba(31,107,79,0.12),_rgba(215,155,44,0.12))] p-6">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand">
-          Supervisor profile
-        </p>
-        <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-          Maintain the profile used during student assessment and search
-        </h2>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">
-          This profile will later support supervisor assignment, score traceability, and search results context.
-        </p>
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Avatar className="h-20 w-20 border border-white/50 shadow-sm">
+                {previewImageUrl ? (
+                  <AvatarImage
+                    src={previewImageUrl}
+                    alt={profileQuery.data?.fullName || form.getValues("fullName") || "Supervisor profile"}
+                  />
+                ) : (
+                  <AvatarFallback className="bg-brand/15 text-xl text-brand">
+                    {getInitials(profileQuery.data?.fullName ?? form.getValues("fullName"))}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  setSelectedImageFile(file);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-brand text-white shadow-sm transition hover:bg-brand-strong"
+                aria-label="Change profile image"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand">
+                Supervisor profile
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+                Maintain the profile used during student assessment and search
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
+                This form now loads the supervisor identity record from the same profile endpoint used across the app.
+              </p>
+            </div>
+          </div>
+          <div className="rounded-[1.5rem] border border-white/50 bg-white/55 px-4 py-3 text-sm text-foreground/90 backdrop-blur">
+            <p className="font-medium">{profileQuery.data?.fullName || "Supervisor profile"}</p>
+            <p className="mt-1 text-muted">{profileQuery.data?.email || "Email not available"}</p>
+            <p className="mt-1 text-muted">{profileQuery.data?.department || "Department not set"}</p>
+            <p className="mt-1 text-muted">
+              {selectedImageFile
+                ? `Ready to upload: ${selectedImageFile.name}`
+                : profileQuery.data?.imageUrl
+                  ? "Profile image already attached to this account."
+                  : "Tap the plus icon to add a profile image."}
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="rounded-[2rem] border border-border/80 bg-surface p-6 shadow-sm">
+      <SurfaceCard className="space-y-5">
+        {profileQuery.isLoading ? (
+          <div className="space-y-3 text-sm text-muted">
+            <p>Loading supervisor profile...</p>
+            <p>Fetching your identity record from the live backend profile endpoint.</p>
+          </div>
+        ) : null}
+
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-6">
+            <SectionHeading
+              eyebrow="Identity"
+              title="Core supervisor information"
+              description="This section anchors the supervisor record used across search, assignment, and review flows."
+            />
             <div className="grid gap-5 md:grid-cols-2">
-              <FormField control={form.control} name="fullName" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full name</FormLabel>
-                  <FormControl><Input placeholder="Enter your full name" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="staffId" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Staff ID</FormLabel>
-                  <FormControl><Input placeholder="SUP-1042" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="email" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email address</FormLabel>
-                  <FormControl><Input type="email" placeholder="supervisor@example.com" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="phoneNumber" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone number</FormLabel>
-                  <FormControl><Input placeholder="08098765432" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="department" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Department</FormLabel>
-                  <FormControl><Input placeholder="Computer Science" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="organization" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>School or faculty</FormLabel>
-                  <FormControl><Input placeholder="School of Computing" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter your full name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email address</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="supervisor@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Department</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Computer Science" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            <FormField control={form.control} name="bio" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Professional summary</FormLabel>
-                <FormControl><Textarea placeholder="Short profile used in review contexts." {...field} /></FormControl>
-                <FormDescription>
-                  Keep this concise. It can later appear in supervisor activity and review pages.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
+            <div className="flex flex-col gap-2.5 rounded-[1.25rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
+              <p>Identity details now load from the live user profile endpoint.</p>
+              <p>Name and profile image now update through the same backend profile route used by the student flow.</p>
+            </div>
 
-            <Button type="submit" className="w-full md:w-auto" disabled={updateProfileMutation.isPending || profileQuery.isLoading}>
+            <Button
+              type="submit"
+              className="w-full md:w-auto"
+              disabled={updateProfileMutation.isPending || profileQuery.isLoading}
+            >
               {updateProfileMutation.isPending ? "Saving profile..." : "Save profile"}
             </Button>
           </form>
         </Form>
-      </div>
+      </SurfaceCard>
     </section>
   );
 }
