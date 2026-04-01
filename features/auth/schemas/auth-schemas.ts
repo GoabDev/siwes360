@@ -63,6 +63,15 @@ export const forgotPasswordSchema = z.object({
   email: z.email("Enter the email address linked to your account."),
 });
 
+export const confirmEmailSchema = z.object({
+  userId: z.uuid("Verification link is missing a valid user ID."),
+  token: z.string().min(1, "Verification link is missing a valid token."),
+});
+
+export const resendEmailVerificationSchema = z.object({
+  email: z.email("Enter the email address linked to your account."),
+});
+
 export const setPasswordSchema = z
   .object({
     userId: z.uuid("Invite link is missing a valid user ID."),
@@ -81,4 +90,6 @@ export type StudentRegisterSchema = z.infer<typeof studentRegisterSchema>;
 export type SupervisorRegisterSchema = z.infer<typeof supervisorRegisterSchema>;
 export type AdminRegisterSchema = z.infer<typeof adminRegisterSchema>;
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
+export type ConfirmEmailSchema = z.infer<typeof confirmEmailSchema>;
+export type ResendEmailVerificationSchema = z.infer<typeof resendEmailVerificationSchema>;
 export type SetPasswordSchema = z.infer<typeof setPasswordSchema>;

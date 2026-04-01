@@ -2,6 +2,8 @@ export const apiEndpoints = {
   auth: {
     login: "/api/Authentication/login",
     register: "/api/Authentication/register",
+    confirmEmail: "/api/Authentication/confirm-email",
+    resendEmailVerification: "/api/Authentication/resend-email-verification",
     refresh: "/api/Authentication/refresh",
     revoke: "/api/Authentication/revoke",
     inviteSupervisor: "/api/Authentication/invite-supervisor",

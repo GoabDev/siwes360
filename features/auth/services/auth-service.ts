@@ -1,8 +1,10 @@
 import type {
   AuthResponse,
+  ConfirmEmailPayload,
   ForgotPasswordPayload,
   LoginPayload,
   RegisterPayload,
+  ResendEmailVerificationPayload,
   SetPasswordPayload,
 } from "@/features/auth/types/auth";
 import { apiClient } from "@/lib/api/client";
@@ -167,9 +169,9 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
 
     return {
       message:
-        getFallbackMessage(message, "Registration successful. You can now sign in.") ??
-        "Registration successful. You can now sign in.",
-      redirectTo: "/auth/login",
+        getFallbackMessage(message, "Registration successful. Check your email to verify your account.") ??
+        "Registration successful. Check your email to verify your account.",
+      redirectTo: `/verify-email?email=${encodeURIComponent(payload.email.trim())}`,
     };
   }
 
@@ -178,20 +180,75 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
   if (payload.role === "student") {
     return {
       message: `Student registration captured for ${payload.matricNo}. Backend student onboarding will plug into this service next.`,
-      redirectTo: "/auth/login",
+      redirectTo: `/verify-email?email=${encodeURIComponent(payload.email.trim())}`,
     };
   }
 
   if (payload.role === "admin") {
     return {
       message: "Admin registration captured locally. Live backend registration will replace this fallback.",
-      redirectTo: "/auth/login",
+      redirectTo: `/verify-email?email=${encodeURIComponent(payload.email.trim())}`,
     };
   }
 
   return {
     message: "Supervisor registration captured locally. Live backend registration will replace this fallback.",
+    redirectTo: `/verify-email?email=${encodeURIComponent(payload.email.trim())}`,
+  };
+}
+
+export async function confirmEmail(
+  payload: ConfirmEmailPayload,
+): Promise<AuthResponse> {
+  if (hasConfiguredApiBaseUrl()) {
+    const response = await apiClient.post<ApiEnvelope<AuthResponse> | AuthResponse>(
+      apiEndpoints.auth.confirmEmail,
+      payload,
+    );
+    const { message, data } = unwrapEnvelope<AuthResponse>(response.data);
+
+    return {
+      ...data,
+      message:
+        getFallbackMessage(message, data?.message, "Email verified successfully.") ??
+        "Email verified successfully.",
+      redirectTo: data?.redirectTo ?? "/auth/login",
+    };
+  }
+
+  await wait(800);
+
+  return {
+    message: "Email verified locally. Live backend confirmation will replace this fallback.",
     redirectTo: "/auth/login",
+  };
+}
+
+export async function resendEmailVerification(
+  payload: ResendEmailVerificationPayload,
+): Promise<AuthResponse> {
+  if (hasConfiguredApiBaseUrl()) {
+    const response = await apiClient.post<ApiEnvelope<AuthResponse> | AuthResponse>(
+      apiEndpoints.auth.resendEmailVerification,
+      payload,
+    );
+    const { message, data } = unwrapEnvelope<AuthResponse>(response.data);
+
+    return {
+      ...data,
+      message:
+        getFallbackMessage(
+          message,
+          data?.message,
+          "A new verification email has been sent if the account exists.",
+        ) ?? "A new verification email has been sent if the account exists.",
+    };
+  }
+
+  await wait(800);
+
+  return {
+    message: `A local verification resend was triggered for ${payload.email}.`,
   };
 }
 

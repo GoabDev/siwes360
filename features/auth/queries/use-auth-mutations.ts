@@ -2,10 +2,12 @@
 
 import { useMutation } from "@tanstack/react-query";
 import {
+  confirmEmail,
   loginUser,
-  setPassword,
-  registerUser,
   requestPasswordReset,
+  registerUser,
+  resendEmailVerification,
+  setPassword,
 } from "@/features/auth/services/auth-service";
 
 export function useLoginMutation() {
@@ -23,6 +25,18 @@ export function useRegisterMutation() {
 export function useForgotPasswordMutation() {
   return useMutation({
     mutationFn: requestPasswordReset,
+  });
+}
+
+export function useConfirmEmailMutation() {
+  return useMutation({
+    mutationFn: confirmEmail,
+  });
+}
+
+export function useResendEmailVerificationMutation() {
+  return useMutation({
+    mutationFn: resendEmailVerification,
   });
 }
 

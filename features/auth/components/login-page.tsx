@@ -7,8 +7,8 @@ export function LoginPageView() {
       eyebrow="Portal access"
       title="Sign in to SIWES 360"
       description="Authenticate once and continue to your role-specific dashboard when backend auth is connected."
-      footerText="Need an account?"
-      footerAction={{ href: "/auth/register", label: "Register" }}
+      footerText="Not verified?"
+      footerAction={{ href: "/auth/verify-email", label: "Verify Email" }}
     >
       <LoginForm />
     </AuthPageShell>
