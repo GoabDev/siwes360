@@ -5,12 +5,16 @@ import { StatCard } from "@/components/ui/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { useStudentProfileQuery } from "@/features/student/queries/student-profile-queries";
-import { useStudentReportQuery } from "@/features/student/queries/student-report-queries";
+import {
+  useStoredStudentSubmissionIdQuery,
+  useStudentDocumentStatusQuery,
+} from "@/features/student/queries/student-report-queries";
 import { useStudentScoresQuery } from "@/features/student/queries/student-scores-queries";
 
 export function StudentDashboardView() {
   const profileQuery = useStudentProfileQuery();
-  const reportQuery = useStudentReportQuery();
+  const submissionIdQuery = useStoredStudentSubmissionIdQuery();
+  const reportQuery = useStudentDocumentStatusQuery(submissionIdQuery.data);
   const scoresQuery = useStudentScoresQuery();
 
   const profile = profileQuery.data;
@@ -27,7 +31,7 @@ export function StudentDashboardView() {
     },
     {
       label: "Report status",
-      value: report ? report.status.replace("_", " ") : "Awaiting upload",
+      value: report ? report.currentStatus : "Awaiting upload",
       detail: report
         ? `Current file: ${report.fileName}`
         : "No SIWES report has been submitted yet.",
@@ -115,7 +119,7 @@ export function StudentDashboardView() {
             </div>
             <div className="rounded-[1.2rem] border border-border/70 bg-background/60 px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Latest report stage</p>
-              <p className="mt-1 text-foreground">{report?.status ?? "not_uploaded"}</p>
+              <p className="mt-1 text-foreground">{report?.currentStatus ?? "Not uploaded"}</p>
             </div>
           </div>
         </SurfaceCard>

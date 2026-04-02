@@ -3,8 +3,6 @@
 import { apiClient } from "@/lib/api/client";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
-import { withDerivedReportProgress } from "@/features/student/utils/report-progress";
-import type { StudentReportRecord } from "@/features/student/types/student-report";
 import type {
   AdminScoreRecord,
   AdminStudentRecord,
@@ -14,96 +12,74 @@ import type {
 import type { SupervisorScoreSubmission } from "@/features/supervisor/types/supervisor-students";
 
 const ADMIN_STORAGE_KEY = "siwes360-admin-score-records";
-const REPORT_STORAGE_KEY = "siwes360-student-report";
+const DOCUMENT_STORAGE_KEY = "siwes360-student-document-record";
 const SUPERVISOR_STORAGE_KEY = "siwes360-supervisor-submissions";
 
+type MockDocumentRecord = {
+  submissionId: string;
+  fileName: string;
+  uploadedAt: string;
+};
+
 const baseStudents = [
-  { matricNumber: "CSC/2021/014", fullName: "Johnson Adebayo", department: "Computer Science" },
-  { matricNumber: "IFT/2021/009", fullName: "Mariam Sani", department: "Information Technology" },
-  { matricNumber: "CSC/2021/021", fullName: "David Ekanem", department: "Computer Science" },
+  { assessmentId: "mock-assessment-1", matricNumber: "CSC/2021/014", fullName: "Johnson Adebayo", department: "Computer Science" },
+  { assessmentId: "mock-assessment-2", matricNumber: "IFT/2021/009", fullName: "Mariam Sani", department: "Information Technology" },
+  { assessmentId: "mock-assessment-3", matricNumber: "CSC/2021/021", fullName: "David Ekanem", department: "Computer Science" },
 ];
 
-type UserProfileStudentRecord = {
-  id?: string;
-  firstname?: string;
-  lastname?: string;
-  email?: string;
-  matricNo?: string;
-  departmentName?: string;
+type AssessmentSummaryDto = {
+  id: string;
+  studentId: string;
+  studentFullName: string;
+  studentEmail: string;
+  matricNumber: string;
+  documentSubmissionId?: string | null;
+  documentValidationScore?: number | null;
+  reportScore?: number | null;
+  supervisorScore?: number | null;
+  logbookScore?: number | null;
+  presentationScore?: number | null;
+  totalScore: number;
+  isComplete: boolean;
+  isFinalized: boolean;
+  grade?: string | null;
+  createdAt: string;
 };
 
-type PaginatedApiPayload =
-  | UserProfileStudentRecord[]
-  | {
-      items?: UserProfileStudentRecord[];
-      results?: UserProfileStudentRecord[];
-      records?: UserProfileStudentRecord[];
-      data?: UserProfileStudentRecord[];
-      pageNumber?: number;
-      currentPage?: number;
-      pageSize?: number;
-      totalCount?: number;
-      totalItems?: number;
-      totalPages?: number;
-    };
-
-type PaginatedApiEnvelope = {
+type PaginatedAssessmentResponse = {
   success?: boolean;
   message?: string;
-  data?: PaginatedApiPayload;
+  data?: {
+    items?: AssessmentSummaryDto[];
+    pageNumber?: number;
+    pageSize?: number;
+    totalCount?: number;
+    totalPages?: number;
+  } | null;
 };
-
-type PaginatedApiObject = Exclude<PaginatedApiPayload, UserProfileStudentRecord[]>;
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function mapUserProfileStudentToAdminRecord(student: UserProfileStudentRecord): AdminStudentRecord {
-  return {
-    matricNumber: student.matricNo ?? "",
-    fullName: `${student.firstname ?? ""} ${student.lastname ?? ""}`.trim() || "Unnamed student",
-    department: student.departmentName ?? "Unknown department",
-    reportScore: null,
-    supervisorScore: null,
-    logbookScore: null,
-    presentationScore: null,
-    totalScore: null,
-    status: "incomplete",
-  };
-}
-
-function parsePaginatedStudentsResponse(
-  payload: PaginatedApiEnvelope | PaginatedApiPayload,
-  fallbackParams: Required<Pick<AdminStudentsQueryParams, "pageNumber" | "pageSize">>,
-): PaginatedAdminStudents {
-  const rawData =
-    typeof payload === "object" && payload !== null && "data" in payload
-      ? payload.data
-      : payload;
-
-  const sourceMeta =
-    rawData && !Array.isArray(rawData)
-      ? (rawData as PaginatedApiObject)
-      : undefined;
-
-  const container =
-    Array.isArray(rawData) || !rawData
-      ? rawData
-      : sourceMeta?.items ?? sourceMeta?.results ?? sourceMeta?.records ?? sourceMeta?.data ?? [];
-
-  const items = (Array.isArray(container) ? container : []).map(mapUserProfileStudentToAdminRecord);
-  const totalCount = sourceMeta?.totalCount ?? sourceMeta?.totalItems ?? items.length;
-  const pageSize = sourceMeta?.pageSize ?? fallbackParams.pageSize;
-  const pageNumber = sourceMeta?.pageNumber ?? sourceMeta?.currentPage ?? fallbackParams.pageNumber;
-  const totalPages = sourceMeta?.totalPages ?? Math.max(1, Math.ceil(totalCount / pageSize));
+function mapAssessmentToAdminRecord(assessment: AssessmentSummaryDto): AdminStudentRecord {
+  const hasPartialScores =
+    assessment.reportScore !== null ||
+    assessment.supervisorScore !== null ||
+    assessment.logbookScore !== null ||
+    assessment.presentationScore !== null;
 
   return {
-    items,
-    totalCount,
-    pageNumber,
-    pageSize,
-    totalPages,
+    assessmentId: assessment.id,
+    matricNumber: assessment.matricNumber,
+    fullName: assessment.studentFullName,
+    department: "Assigned department",
+    reportScore: assessment.reportScore ?? null,
+    supervisorScore: assessment.supervisorScore ?? null,
+    logbookScore: assessment.logbookScore ?? null,
+    presentationScore: assessment.presentationScore ?? null,
+    totalScore: assessment.isComplete ? assessment.totalScore : null,
+    status: assessment.isComplete ? "complete" : hasPartialScores ? "ready" : "incomplete",
   };
 }
 
@@ -131,26 +107,31 @@ function getStoredSupervisorScores(): SupervisorScoreSubmission[] {
   return value ? (JSON.parse(value) as SupervisorScoreSubmission[]) : [];
 }
 
-function getStoredReport(): StudentReportRecord | null {
+function getMockReportScore(uploadedAt: string) {
+  const elapsedSeconds = Math.floor((Date.now() - new Date(uploadedAt).getTime()) / 1000);
+  return elapsedSeconds >= 20 ? 84 : null;
+}
+
+function getStoredReport(): MockDocumentRecord | null {
   if (typeof window === "undefined") {
     return null;
   }
 
-  const value = window.localStorage.getItem(REPORT_STORAGE_KEY);
-  return value ? withDerivedReportProgress(JSON.parse(value) as StudentReportRecord) : null;
+  const value = window.localStorage.getItem(DOCUMENT_STORAGE_KEY);
+  return value ? (JSON.parse(value) as MockDocumentRecord) : null;
 }
 
 function buildAdminStudentRecord(
   student: (typeof baseStudents)[number],
   adminScores: AdminScoreRecord[],
   supervisorScores: SupervisorScoreSubmission[],
-  report: StudentReportRecord | null,
+  report: MockDocumentRecord | null,
 ): AdminStudentRecord {
   const adminScore = adminScores.find((item) => item.matricNumber === student.matricNumber) ?? null;
   const supervisorScore =
     supervisorScores.find((item) => item.matricNumber === student.matricNumber)?.score ?? null;
-  const reportScore = report && report.reportScore && student.matricNumber === "CSC/2021/014"
-    ? report.reportScore
+  const reportScore = report && student.matricNumber === "CSC/2021/014"
+    ? getMockReportScore(report.uploadedAt)
     : null;
   const totalParts = [reportScore, supervisorScore, adminScore?.logbookScore ?? null, adminScore?.presentationScore ?? null];
   const hasAllScores = totalParts.every((item) => item !== null);
@@ -159,6 +140,7 @@ function buildAdminStudentRecord(
     : null;
 
   return {
+    assessmentId: student.assessmentId,
     matricNumber: student.matricNumber,
     fullName: student.fullName,
     department: student.department,
@@ -185,11 +167,20 @@ export async function getAdminStudents(
   };
 
   if (hasConfiguredApiBaseUrl()) {
-    const response = await apiClient.get<PaginatedApiEnvelope>(apiEndpoints.userProfile.students, {
+    const response = await apiClient.get<PaginatedAssessmentResponse>(apiEndpoints.assessment.admin, {
       params: normalizedParams,
     });
 
-    return parsePaginatedStudentsResponse(response.data, normalizedParams);
+    const payload = response.data?.data;
+    const items = (payload?.items ?? []).map(mapAssessmentToAdminRecord);
+
+    return {
+      items,
+      totalCount: payload?.totalCount ?? items.length,
+      pageNumber: payload?.pageNumber ?? normalizedParams.pageNumber,
+      pageSize: payload?.pageSize ?? normalizedParams.pageSize,
+      totalPages: payload?.totalPages ?? Math.max(1, Math.ceil(items.length / normalizedParams.pageSize)),
+    };
   }
 
   await wait(500);
@@ -228,29 +219,42 @@ export async function getAdminStudents(
 export async function getAdminStudentByMatric(matricNumber: string) {
   const students = await getAdminStudents({
     pageNumber: 1,
-    pageSize: 10,
+    pageSize: 50,
     searchTerm: matricNumber,
   });
   return students.items.find((student) => student.matricNumber === matricNumber) ?? null;
 }
 
 export async function submitAdminScores(input: {
+  assessmentId: string;
   matricNumber: string;
   logbookScore: number;
   presentationScore: number;
   note: string;
 }) {
   if (hasConfiguredApiBaseUrl()) {
-    const response = await apiClient.post<{ message: string; record: AdminScoreRecord }>(
-      `${apiEndpoints.admin.profile}/scores`,
-      input,
-    );
-    return response.data;
+    await apiClient.post<{ message?: string }>(apiEndpoints.assessment.adminScores, {
+      assessmentId: input.assessmentId,
+      logbookScore: input.logbookScore,
+      presentationScore: input.presentationScore,
+    });
+
+    return {
+      message: "Administrative scores saved successfully.",
+      record: {
+        assessmentId: input.assessmentId,
+        matricNumber: input.matricNumber,
+        logbookScore: input.logbookScore,
+        presentationScore: input.presentationScore,
+        updatedAt: new Date().toISOString(),
+      } satisfies AdminScoreRecord,
+    };
   }
 
   await wait(750);
 
   const nextRecord: AdminScoreRecord = {
+    assessmentId: input.assessmentId,
     matricNumber: input.matricNumber,
     logbookScore: input.logbookScore,
     presentationScore: input.presentationScore,

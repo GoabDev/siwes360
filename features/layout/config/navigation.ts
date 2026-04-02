@@ -28,7 +28,7 @@ export const roleNavigation: Record<"student" | "supervisor" | "admin", Navigati
   supervisor: [
     { href: "/supervisor", label: "Dashboard", icon: "dashboard" },
     { href: "/supervisor/profile", label: "Profile", icon: "profile" },
-    { href: "/supervisor/search", label: "Student search", icon: "search" },
+    { href: "/supervisor/search", label: "Students", icon: "students" },
     { href: "/supervisor/submissions", label: "Submissions", icon: "scores" },
   ],
   admin: [

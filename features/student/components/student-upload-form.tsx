@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UploadCloud } from "lucide-react";
+import Link from "next/link";
+import { FileText, UploadCloud } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,41 +15,41 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SurfaceCard } from "@/components/ui/surface-card";
-import { Textarea } from "@/components/ui/textarea";
 import { StudentReportStatusCard } from "@/features/student/components/student-report-status-card";
 import {
   studentReportSchema,
   type StudentReportSchema,
 } from "@/features/student/schemas/student-report-schema";
 import {
-  useStudentReportQuery,
-  useUploadStudentReportMutation,
+  useStoredStudentSubmissionIdQuery,
+  useStudentDocumentStatusQuery,
+  useUploadStudentDocumentMutation,
 } from "@/features/student/queries/student-report-queries";
+import { getApiErrorMessage } from "@/lib/api/error";
 
 const defaultValues = {
-  title: "",
-  summary: "",
   file: undefined as unknown as File,
 };
 
 export function StudentUploadForm() {
-  const reportQuery = useStudentReportQuery();
-  const uploadMutation = useUploadStudentReportMutation();
+  const submissionIdQuery = useStoredStudentSubmissionIdQuery();
+  const statusQuery = useStudentDocumentStatusQuery(submissionIdQuery.data);
+  const uploadMutation = useUploadStudentDocumentMutation();
 
   const form = useForm<StudentReportSchema>({
     resolver: zodResolver(studentReportSchema),
     defaultValues,
   });
+  const selectedFile = form.watch("file");
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       await toast.promise(uploadMutation.mutateAsync(values), {
         loading: "Uploading SIWES report...",
         success: (data) => data.message,
-        error: "Unable to upload report.",
+        error: (error) => getApiErrorMessage(error, "Unable to upload report."),
       });
       form.reset(defaultValues);
     } catch {
@@ -64,11 +65,56 @@ export function StudentUploadForm() {
           Submit your SIWES report into the review pipeline
         </h2>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">
-          This flow is structured for file upload, review status tracking, and later backend validation responses.
+          Upload a DOCX report and the backend will queue and validate it automatically.
         </p>
       </div>
 
-      <StudentReportStatusCard report={reportQuery.data ?? null} />
+      {selectedFile ? (
+        <div className="rounded-[1.35rem] border border-brand/20 bg-brand/8 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-brand/12 p-2 text-brand">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">
+                  Selected file
+                </p>
+                <p className="mt-1 text-sm font-medium text-foreground">{selectedFile.name}</p>
+                <p className="mt-1 text-sm text-muted">
+                  {Math.max(1, Math.ceil(selectedFile.size / 1024))} KB
+                </p>
+              </div>
+            </div>
+            <p className="max-w-sm text-sm leading-6 text-muted">
+              This file will be uploaded and then tracked automatically on this page.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">
+              Current submission
+            </p>
+            <h3 className="mt-1 text-xl font-semibold">
+              {statusQuery.data ? "Track your latest upload immediately" : "No active submission yet"}
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              {statusQuery.data
+                ? "The upload page now reflects the live backend queue and validation state as soon as your file is submitted."
+                : "After upload, the latest document status will appear here without leaving the page."}
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/student/report-status">Open full status page</Link>
+          </Button>
+        </div>
+
+        <StudentReportStatusCard status={statusQuery.data ?? null} report={null} />
+      </div>
 
       <SurfaceCard>
         <Form {...form}>
@@ -76,40 +122,7 @@ export function StudentUploadForm() {
             <SectionHeading
               eyebrow="Submission"
               title="Upload package"
-              description="Submit a file and short context note so the review pipeline has enough metadata to work with."
-            />
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Report title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter the report title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="summary"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Submission summary</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Briefly describe the report content or placement focus."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    This summary can later help admins and supervisors identify the submission quickly.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+              description="Submit your report file and the backend will handle queueing and validation."
             />
 
             <FormField
@@ -125,16 +138,21 @@ export function StudentUploadForm() {
                       <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-[1.35rem] border border-dashed border-border bg-background/60 px-6 py-7 text-center">
                         <UploadCloud className="h-8 w-8 text-brand" />
                         <span className="mt-4 text-base font-medium">
-                          Choose a PDF or DOCX file
+                          Choose a DOCX file
                         </span>
                         <span className="mt-2 text-sm text-muted">
                           Maximum size: 10MB
                         </span>
+                        {selectedFile ? (
+                          <span className="mt-3 rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
+                            {selectedFile.name}
+                          </span>
+                        ) : null}
                         <input
                           ref={ref}
                           name={name}
                           type="file"
-                          accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                           className="sr-only"
                           onChange={(event) => {
                             const file = event.target.files?.[0];
@@ -144,7 +162,7 @@ export function StudentUploadForm() {
                       </label>
                     </FormControl>
                     <FormDescription>
-                      Backend checks will later handle formatting, plagiarism, and AI review.
+                      The backend currently validates Word document structure and formatting rules.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

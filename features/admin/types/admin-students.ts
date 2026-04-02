@@ -1,4 +1,5 @@
 export type AdminStudentRecord = {
+  assessmentId: string;
   matricNumber: string;
   fullName: string;
   department: string;
@@ -25,6 +26,7 @@ export type PaginatedAdminStudents = {
 };
 
 export type AdminScoreRecord = {
+  assessmentId?: string;
   matricNumber: string;
   logbookScore: number;
   presentationScore: number;

@@ -2,20 +2,29 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  getSupervisorStudents,
   getSupervisorSubmissions,
   searchSupervisorStudent,
   submitSupervisorScore,
 } from "@/features/supervisor/services/supervisor-student-service";
-import type {
-  SupervisorScoreSubmission,
-  SupervisorStudentRecord,
-} from "@/features/supervisor/types/supervisor-students";
+import type { SupervisorStudentsQueryParams } from "@/features/supervisor/types/supervisor-students";
 
 export const supervisorStudentLookupKey = (matricNumber: string) => [
   "supervisor-student",
   matricNumber,
 ];
+export const supervisorStudentsKey = (params?: SupervisorStudentsQueryParams) => [
+  "supervisor-students",
+  params,
+];
 export const supervisorSubmissionsKey = ["supervisor-submissions"];
+
+export function useSupervisorStudentsQuery(params?: SupervisorStudentsQueryParams) {
+  return useQuery({
+    queryKey: supervisorStudentsKey(params),
+    queryFn: () => getSupervisorStudents(params),
+  });
+}
 
 export function useSupervisorStudentQuery(matricNumber: string) {
   return useQuery({
@@ -37,21 +46,12 @@ export function useSubmitSupervisorScoreMutation() {
 
   return useMutation({
     mutationFn: submitSupervisorScore,
-    onSuccess: (data) => {
-      queryClient.setQueryData<SupervisorScoreSubmission[]>(
-        supervisorSubmissionsKey,
-        (current = []) => [data.submission, ...current.filter((item) => item.matricNumber !== data.submission.matricNumber)],
-      );
-      queryClient.setQueryData<SupervisorStudentRecord | null>(
-        supervisorStudentLookupKey(data.submission.matricNumber),
-        (current) =>
-          current
-            ? {
-                ...current,
-                status: "scored",
-              }
-            : current,
-      );
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: supervisorSubmissionsKey });
+      await queryClient.invalidateQueries({ queryKey: ["supervisor-students"] });
+      await queryClient.invalidateQueries({
+        queryKey: supervisorStudentLookupKey(variables.matricNumber),
+      });
     },
   });
 }

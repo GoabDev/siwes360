@@ -23,9 +23,24 @@ export const apiEndpoints = {
   photo: {
     upload: "/api/Photo/upload",
   },
+  document: {
+    upload: "/api/Document/upload",
+    status: (submissionId: string) => `/api/Document/${submissionId}/status`,
+    validationReport: (submissionId: string) =>
+      `/api/Document/${submissionId}/validation-report`,
+  },
+  assessment: {
+    byId: (assessmentId: string) => `/api/Assessment/${assessmentId}`,
+    byStudent: (studentId: string) => `/api/Assessment/student/${studentId}`,
+    studentWorkflow: (studentId: string) =>
+      `/api/Assessment/student/${studentId}/workflow-progress`,
+    supervisor: "/api/Assessment/supervisor",
+    admin: "/api/Assessment/admin",
+    supervisorScore: "/api/Assessment/supervisor-score",
+    adminScores: "/api/Assessment/admin-scores",
+  },
   student: {
     profile: "/students/profile",
-    reportUpload: "/students/report",
   },
   supervisor: {
     profile: "/supervisors/profile",

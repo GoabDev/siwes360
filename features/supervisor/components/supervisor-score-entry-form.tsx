@@ -26,6 +26,7 @@ import {
   useSubmitSupervisorScoreMutation,
   useSupervisorStudentQuery,
 } from "@/features/supervisor/queries/supervisor-student-queries";
+import { getApiErrorMessage } from "@/lib/api/error";
 
 type SupervisorScoreEntryFormProps = {
   matricNumber: string;
@@ -46,26 +47,6 @@ export function SupervisorScoreEntryForm({
     },
   });
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    try {
-      await toast.promise(
-        submitMutation.mutateAsync({
-          matricNumber,
-          score: values.score,
-          note: values.note,
-        }),
-        {
-          loading: "Submitting supervision score...",
-          success: (data) => data.message,
-          error: "Unable to submit supervision score.",
-        },
-      );
-      router.push("/supervisor/submissions");
-    } catch {
-      return;
-    }
-  });
-
   if (studentQuery.isLoading) {
     return (
       <SurfaceCard>
@@ -83,6 +64,26 @@ export function SupervisorScoreEntryForm({
   }
 
   const student = studentQuery.data;
+  const onSubmit = form.handleSubmit(async (values) => {
+    try {
+      await toast.promise(
+        submitMutation.mutateAsync({
+          assessmentId: student.assessmentId,
+          matricNumber,
+          score: values.score,
+          note: values.note,
+        }),
+        {
+          loading: "Submitting supervision score...",
+          success: (data) => data.message,
+          error: (error) => getApiErrorMessage(error, "Unable to submit supervision score."),
+        },
+      );
+      router.push("/supervisor/submissions");
+    } catch {
+      return;
+    }
+  });
 
   return (
     <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
@@ -116,7 +117,7 @@ export function SupervisorScoreEntryForm({
                       step={1}
                       name={field.name}
                       ref={field.ref}
-                      value={typeof field.value === "number" ? field.value : ""}
+                      value={field.value == null ? "" : String(field.value)}
                       onBlur={field.onBlur}
                       onChange={(event) => field.onChange(event.target.value)}
                     />

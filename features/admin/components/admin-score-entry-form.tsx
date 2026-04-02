@@ -24,6 +24,7 @@ import {
   type AdminScoreSchema,
   type AdminScoreSchemaInput,
 } from "@/features/admin/schemas/admin-score-schema";
+import { getApiErrorMessage } from "@/lib/api/error";
 
 type AdminScoreEntryFormProps = {
   matricNumber: string;
@@ -47,6 +48,7 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
     try {
       await toast.promise(
         submitMutation.mutateAsync({
+          assessmentId: student.assessmentId,
           matricNumber,
           logbookScore: values.logbookScore,
           presentationScore: values.presentationScore,
@@ -55,7 +57,7 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
         {
           loading: "Saving admin scores...",
           success: (data) => data.message,
-          error: "Unable to save admin scores.",
+          error: (error) => getApiErrorMessage(error, "Unable to save admin scores."),
         },
       );
       router.push("/admin/students");
@@ -134,7 +136,7 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
                       step={1}
                       name={field.name}
                       ref={field.ref}
-                      value={typeof field.value === "number" ? field.value : ""}
+                      value={field.value == null ? "" : String(field.value)}
                       onBlur={field.onBlur}
                       onChange={(event) => field.onChange(event.target.value)}
                     />
@@ -158,7 +160,7 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
                       step={1}
                       name={field.name}
                       ref={field.ref}
-                      value={typeof field.value === "number" ? field.value : ""}
+                      value={field.value == null ? "" : String(field.value)}
                       onBlur={field.onBlur}
                       onChange={(event) => field.onChange(event.target.value)}
                     />

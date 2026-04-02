@@ -1,15 +1,15 @@
 import { DashboardHero } from "@/components/ui/dashboard-hero";
-import { SupervisorSearchForm } from "@/features/supervisor/components/supervisor-search-form";
+import { SupervisorStudentsTable } from "@/features/supervisor/components/supervisor-students-table";
 
 export function SupervisorSearchPageView() {
   return (
     <section className="space-y-6">
       <DashboardHero
-        eyebrow="Student lookup"
-        title="Find the right student before supervision scoring"
-        description="Search by matric number, verify the student context, and continue into score entry from a reliable record."
+        eyebrow="Students"
+        title="Review and search assigned students before scoring"
+        description="Browse students in your supervision scope, search by name or matric number, and continue directly into score entry."
       />
-      <SupervisorSearchForm />
+      <SupervisorStudentsTable />
     </section>
   );
 }
