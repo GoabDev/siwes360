@@ -84,6 +84,19 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
 
   const student = studentQuery.data;
 
+  if (!student.assessmentId) {
+    return (
+      <SurfaceCard className="space-y-3">
+        <p className="text-sm text-muted">
+          This student does not have an assessment record yet.
+        </p>
+        <p className="text-sm text-muted">
+          The student needs to upload and validate a report before admin scores can be entered.
+        </p>
+      </SurfaceCard>
+    );
+  }
+
   return (
     <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
       <SurfaceCard className="space-y-4">

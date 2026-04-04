@@ -114,8 +114,8 @@ export function StudentDashboardView() {
               <p className="mt-1 text-foreground">{profile?.department ?? "Not available yet"}</p>
             </div>
             <div className="rounded-[1.2rem] border border-border/70 bg-background/60 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Placement</p>
-              <p className="mt-1 text-foreground">{profile?.placementCompany ?? "No placement profile saved yet"}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Matric number</p>
+              <p className="mt-1 text-foreground">{profile?.matricNumber ?? "Not available yet"}</p>
             </div>
             <div className="rounded-[1.2rem] border border-border/70 bg-background/60 px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Latest report stage</p>

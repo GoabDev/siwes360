@@ -44,12 +44,6 @@ const defaultValues: StudentProfileSchema = {
   matricNumber: "",
   department: "",
   phoneNumber: "",
-  placementCompany: "",
-  placementAddress: "",
-  workplaceSupervisorName: "",
-  startDate: "",
-  endDate: "",
-  bio: "",
 };
 
 function getInitials(name: string) {
@@ -165,11 +159,10 @@ export function StudentProfileForm() {
                 Student profile
               </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                Complete your SIWES identity and placement details
+                Complete your SIWES identity details
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-                This form keeps the existing workplace details while the backend now supplies the
-                core student identity data.
+                This form focuses on the core student identity data used across the student workflow.
               </p>
             </div>
           </div>
@@ -269,109 +262,9 @@ export function StudentProfileForm() {
               />
             </div>
 
-            <SectionHeading
-              eyebrow="Placement"
-              title="Workplace details"
-              description="Capture the placement information that supervisors and admins will rely on later."
-            />
-            <div className="grid gap-5 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="placementCompany"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SIWES placement company</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Company or organisation name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="workplaceSupervisorName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Workplace supervisor name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Who supervises you on-site?" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="placementAddress"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Placement address</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Full placement address" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SIWES start date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SIWES end date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      This helps the system align reporting and evaluation periods.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="bio"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Short profile summary</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Briefly describe your discipline, placement context, and what you are working on."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Keep this short and practical. It can later be reused in student summary cards.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="flex flex-col gap-2.5 rounded-[1.25rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
               <p>Identity details now load from the live user profile endpoint.</p>
-              <p>Name and profile image now update through the live backend endpoint. Workplace and SIWES details still remain frontend-managed for now.</p>
+              <p>Name and profile image now update through the live backend endpoint.</p>
             </div>
 
             <Button

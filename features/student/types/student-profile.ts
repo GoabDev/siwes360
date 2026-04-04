@@ -6,12 +6,6 @@ export type StudentProfile = {
   department: string;
   imageUrl?: string;
   phoneNumber?: string;
-  placementCompany?: string;
-  placementAddress?: string;
-  workplaceSupervisorName?: string;
-  startDate?: string;
-  endDate?: string;
-  bio?: string;
 };
 
 export type UpdateStudentProfilePayload = StudentProfile & {

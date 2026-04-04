@@ -21,6 +21,38 @@ type MockDocumentRecord = {
   uploadedAt: string;
 };
 
+type UserProfileStudentRecord = {
+  id?: string;
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  matricNo?: string;
+  departmentName?: string;
+};
+
+type PaginatedUserProfilePayload =
+  | UserProfileStudentRecord[]
+  | {
+      items?: UserProfileStudentRecord[];
+      results?: UserProfileStudentRecord[];
+      records?: UserProfileStudentRecord[];
+      data?: UserProfileStudentRecord[];
+      pageNumber?: number;
+      currentPage?: number;
+      pageSize?: number;
+      totalCount?: number;
+      totalItems?: number;
+      totalPages?: number;
+    };
+
+type PaginatedUserProfileEnvelope = {
+  success?: boolean;
+  message?: string;
+  data?: PaginatedUserProfilePayload;
+};
+
+type PaginatedUserProfileObject = Exclude<PaginatedUserProfilePayload, UserProfileStudentRecord[]>;
+
 const baseStudents = [
   { assessmentId: "mock-assessment-1", matricNumber: "CSC/2021/014", fullName: "Johnson Adebayo", department: "Computer Science" },
   { assessmentId: "mock-assessment-2", matricNumber: "IFT/2021/009", fullName: "Mariam Sani", department: "Information Technology" },
@@ -74,6 +106,81 @@ function mapAssessmentToAdminRecord(assessment: AssessmentSummaryDto): AdminStud
     matricNumber: assessment.matricNumber,
     fullName: assessment.studentFullName,
     department: "Assigned department",
+    reportScore: assessment.reportScore ?? null,
+    supervisorScore: assessment.supervisorScore ?? null,
+    logbookScore: assessment.logbookScore ?? null,
+    presentationScore: assessment.presentationScore ?? null,
+    totalScore: assessment.isComplete ? assessment.totalScore : null,
+    status: assessment.isComplete ? "complete" : hasPartialScores ? "ready" : "incomplete",
+  };
+}
+
+function mapUserProfileStudentToAdminRecord(student: UserProfileStudentRecord): AdminStudentRecord {
+  return {
+    assessmentId: null,
+    matricNumber: student.matricNo ?? "",
+    fullName: `${student.firstname ?? ""} ${student.lastname ?? ""}`.trim() || "Unnamed student",
+    department: student.departmentName ?? "Unknown department",
+    reportScore: null,
+    supervisorScore: null,
+    logbookScore: null,
+    presentationScore: null,
+    totalScore: null,
+    status: "incomplete",
+  };
+}
+
+function parsePaginatedStudentsResponse(
+  payload: PaginatedUserProfileEnvelope | PaginatedUserProfilePayload,
+  fallbackParams: Required<Pick<AdminStudentsQueryParams, "pageNumber" | "pageSize">>,
+): PaginatedAdminStudents {
+  const rawData =
+    typeof payload === "object" && payload !== null && "data" in payload
+      ? payload.data
+      : payload;
+
+  const sourceMeta =
+    rawData && !Array.isArray(rawData)
+      ? (rawData as PaginatedUserProfileObject)
+      : undefined;
+
+  const container =
+    Array.isArray(rawData) || !rawData
+      ? rawData
+      : sourceMeta?.items ?? sourceMeta?.results ?? sourceMeta?.records ?? sourceMeta?.data ?? [];
+
+  const items = (Array.isArray(container) ? container : []).map(mapUserProfileStudentToAdminRecord);
+  const totalCount = sourceMeta?.totalCount ?? sourceMeta?.totalItems ?? items.length;
+  const pageSize = sourceMeta?.pageSize ?? fallbackParams.pageSize;
+  const pageNumber = sourceMeta?.pageNumber ?? sourceMeta?.currentPage ?? fallbackParams.pageNumber;
+  const totalPages = sourceMeta?.totalPages ?? Math.max(1, Math.ceil(totalCount / pageSize));
+
+  return {
+    items,
+    totalCount,
+    pageNumber,
+    pageSize,
+    totalPages,
+  };
+}
+
+function mergeStudentWithAssessment(
+  student: AdminStudentRecord,
+  assessment: AssessmentSummaryDto | undefined,
+): AdminStudentRecord {
+  if (!assessment) {
+    return student;
+  }
+
+  const hasPartialScores =
+    assessment.reportScore !== null ||
+    assessment.supervisorScore !== null ||
+    assessment.logbookScore !== null ||
+    assessment.presentationScore !== null;
+
+  return {
+    ...student,
+    assessmentId: assessment.id,
     reportScore: assessment.reportScore ?? null,
     supervisorScore: assessment.supervisorScore ?? null,
     logbookScore: assessment.logbookScore ?? null,
@@ -167,19 +274,33 @@ export async function getAdminStudents(
   };
 
   if (hasConfiguredApiBaseUrl()) {
-    const response = await apiClient.get<PaginatedAssessmentResponse>(apiEndpoints.assessment.admin, {
-      params: normalizedParams,
-    });
+    const [studentsResponse, assessmentsResponse] = await Promise.all([
+      apiClient.get<PaginatedUserProfileEnvelope>(apiEndpoints.userProfile.students, {
+        params: normalizedParams,
+      }),
+      apiClient.get<PaginatedAssessmentResponse>(apiEndpoints.assessment.admin, {
+        params: {
+          pageNumber: 1,
+          pageSize: 1000,
+          searchTerm: normalizedParams.searchTerm,
+        },
+      }),
+    ]);
 
-    const payload = response.data?.data;
-    const items = (payload?.items ?? []).map(mapAssessmentToAdminRecord);
+    const studentsPage = parsePaginatedStudentsResponse(
+      studentsResponse.data,
+      normalizedParams,
+    );
+    const assessments = assessmentsResponse.data?.data?.items ?? [];
+    const assessmentByMatric = new Map(
+      assessments.map((assessment) => [assessment.matricNumber, assessment]),
+    );
 
     return {
-      items,
-      totalCount: payload?.totalCount ?? items.length,
-      pageNumber: payload?.pageNumber ?? normalizedParams.pageNumber,
-      pageSize: payload?.pageSize ?? normalizedParams.pageSize,
-      totalPages: payload?.totalPages ?? Math.max(1, Math.ceil(items.length / normalizedParams.pageSize)),
+      ...studentsPage,
+      items: studentsPage.items.map((student) =>
+        mergeStudentWithAssessment(student, assessmentByMatric.get(student.matricNumber)),
+      ),
     };
   }
 
@@ -226,13 +347,17 @@ export async function getAdminStudentByMatric(matricNumber: string) {
 }
 
 export async function submitAdminScores(input: {
-  assessmentId: string;
+  assessmentId: string | null;
   matricNumber: string;
   logbookScore: number;
   presentationScore: number;
   note: string;
 }) {
   if (hasConfiguredApiBaseUrl()) {
+    if (!input.assessmentId) {
+      throw new Error("This student does not have an assessment record yet.");
+    }
+
     await apiClient.post<{ message?: string }>(apiEndpoints.assessment.adminScores, {
       assessmentId: input.assessmentId,
       logbookScore: input.logbookScore,
@@ -254,7 +379,7 @@ export async function submitAdminScores(input: {
   await wait(750);
 
   const nextRecord: AdminScoreRecord = {
-    assessmentId: input.assessmentId,
+    assessmentId: input.assessmentId ?? undefined,
     matricNumber: input.matricNumber,
     logbookScore: input.logbookScore,
     presentationScore: input.presentationScore,

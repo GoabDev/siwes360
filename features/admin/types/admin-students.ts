@@ -1,5 +1,5 @@
 export type AdminStudentRecord = {
-  assessmentId: string;
+  assessmentId: string | null;
   matricNumber: string;
   fullName: string;
   department: string;

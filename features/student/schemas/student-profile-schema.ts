@@ -7,12 +7,6 @@ export const studentProfileSchema = z.object({
   matricNumber: z.string().min(5, "Enter a valid matric number."),
   department: z.string().min(2, "Select your department."),
   phoneNumber: optionalTextField,
-  placementCompany: optionalTextField,
-  placementAddress: optionalTextField,
-  workplaceSupervisorName: optionalTextField,
-  startDate: optionalTextField,
-  endDate: optionalTextField,
-  bio: optionalTextField,
 });
 
 export type StudentProfileSchema = z.infer<typeof studentProfileSchema>;

@@ -156,11 +156,15 @@ export function AdminStudentsTable() {
             <span>{scoreValue(student.logbookScore, 30)}</span>
             <span>{scoreValue(student.presentationScore, 30)}</span>
             <span>{student.totalScore === null ? "Incomplete" : `${student.totalScore} / 100`}</span>
-            <Button asChild size="sm" variant="outline">
-              <Link href={`/admin/score-entry/${encodeURIComponent(student.matricNumber)}`}>
-                {student.logbookScore !== null || student.presentationScore !== null ? "Edit" : "Grade"}
-              </Link>
-            </Button>
+            {student.assessmentId ? (
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/admin/score-entry/${encodeURIComponent(student.matricNumber)}`}>
+                  {student.logbookScore !== null || student.presentationScore !== null ? "Edit" : "Grade"}
+                </Link>
+              </Button>
+            ) : (
+              <span className="text-xs text-muted">Await report</span>
+            )}
           </div>
         ))}
       </div>

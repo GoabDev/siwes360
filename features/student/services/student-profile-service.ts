@@ -54,12 +54,6 @@ const mockProfile: StudentProfile = {
   department: "Computer Science",
   imageUrl: "",
   phoneNumber: "08012345678",
-  placementCompany: "Interswitch",
-  placementAddress: "12 Marina Road, Lagos",
-  workplaceSupervisorName: "Mrs. Grace Okon",
-  startDate: "2026-01-12",
-  endDate: "2026-06-12",
-  bio: "400-level student currently attached to a fintech product team for SIWES placement.",
 };
 
 function mapUserProfileResponseToStudentProfile(
@@ -73,12 +67,6 @@ function mapUserProfileResponseToStudentProfile(
     department: payload.departmentName,
     imageUrl: payload.imageUrl ?? "",
     phoneNumber: "",
-    placementCompany: "",
-    placementAddress: "",
-    workplaceSupervisorName: "",
-    startDate: "",
-    endDate: "",
-    bio: "",
   };
 }
 
@@ -161,7 +149,7 @@ export async function updateStudentProfile(
   await wait(950);
   return {
     message:
-      "Student profile saved locally. Workplace profile update fields will move to the live backend once that contract is finalized.",
+      "Student profile saved locally.",
     profile: {
       ...payload,
       imageUrl: payload.imageFile ? payload.imageUrl ?? "" : payload.imageUrl ?? "",
