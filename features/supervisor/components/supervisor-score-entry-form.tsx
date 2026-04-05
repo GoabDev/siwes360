@@ -62,7 +62,7 @@ export function SupervisorScoreEntryForm({
   if (studentQuery.isLoading) {
     return (
       <SurfaceCard>
-        <p className="text-sm text-muted">Loading student record...</p>
+        <p className="text-sm text-muted">Loading student details...</p>
       </SurfaceCard>
     );
   }
@@ -70,7 +70,7 @@ export function SupervisorScoreEntryForm({
   if (!studentQuery.data) {
     return (
       <SurfaceCard>
-        <p className="text-sm text-muted">No student record was found for this matric number.</p>
+        <p className="text-sm text-muted">No student was found for this matric number.</p>
       </SurfaceCard>
     );
   }
@@ -121,10 +121,10 @@ export function SupervisorScoreEntryForm({
 
         <SurfaceCard className="space-y-3">
           <p className="text-sm text-muted">
-            This assessment has already been finalized on the backend.
+            This student&apos;s assessment has already been finalized.
           </p>
           <p className="text-sm text-muted">
-            Supervisor scores are locked once finalization has happened.
+            You can no longer change the supervision score.
           </p>
         </SurfaceCard>
       </div>
@@ -158,6 +158,13 @@ export function SupervisorScoreEntryForm({
       <SurfaceCard>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-5">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Supervisor scoring</p>
+              <h3 className="mt-1 text-xl font-semibold">Enter the supervision score</h3>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Add the student&apos;s score and a short note from your visit or review.
+              </p>
+            </div>
             <FormField
               control={form.control}
               name="score"
@@ -191,6 +198,7 @@ export function SupervisorScoreEntryForm({
                   <FormControl>
                     <Textarea
                       placeholder="Brief note confirming the visit and evaluation context."
+                      
                       {...field}
                     />
                   </FormControl>

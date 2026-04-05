@@ -69,10 +69,10 @@ export function StudentUploadForm() {
       <div className="rounded-[2rem] border border-border/80 bg-[linear-gradient(135deg,_rgba(31,107,79,0.12),_rgba(215,155,44,0.12))] p-6">
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand">Report upload</p>
         <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-          Submit your SIWES report into the review pipeline
+          Upload your SIWES report
         </h2>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">
-          Upload a DOCX report and the backend will queue and validate it automatically.
+          Upload your report in DOCX format and we will begin checking it automatically.
         </p>
       </div>
 
@@ -115,9 +115,9 @@ export function StudentUploadForm() {
             </h3>
             <p className="mt-2 text-sm leading-6 text-muted">
               {isStatusLoading
-                ? "Checking the latest submission and validation state attached to your account."
+                ? "Checking your latest report status."
                 : statusQuery.data
-                ? "The upload page now reflects the live backend queue and validation state as soon as your file is submitted."
+                ? "You can follow the progress of your latest report from this page."
                 : "After upload, the latest document status will appear here without leaving the page."}
             </p>
           </div>
@@ -147,8 +147,8 @@ export function StudentUploadForm() {
           <form onSubmit={onSubmit} className="space-y-6">
             <SectionHeading
               eyebrow="Submission"
-              title="Upload package"
-              description="Submit your report file and the backend will handle queueing and validation."
+              title="Choose your report file"
+              description="Once you upload your report, you can track its progress here."
             />
 
             <FormField
@@ -188,7 +188,7 @@ export function StudentUploadForm() {
                       </label>
                     </FormControl>
                     <FormDescription>
-                      The backend currently validates Word document structure and formatting rules.
+                      Please upload a Word document in DOCX format.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -203,6 +203,9 @@ export function StudentUploadForm() {
             >
               {uploadMutation.isPending ? "Uploading report..." : "Upload report"}
             </Button>
+            <p className="text-sm leading-6 text-muted">
+              After upload, your latest review updates and formatting checks will appear above.
+            </p>
           </form>
         </Form>
       </SurfaceCard>

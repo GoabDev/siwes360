@@ -31,15 +31,15 @@ export function StudentDashboardView() {
       label: "Profile completion",
       value: isLoading && !profile ? "Loading..." : profile ? "100%" : "Pending",
       detail: profile
-        ? "Profile data is available for the rest of the SIWES workflow."
-        : "Complete your profile to unlock stronger student context across the platform.",
+        ? "Your details are ready for report review and grading."
+        : "Complete your profile so your department can review your work properly.",
     },
     {
       label: "Report status",
       value: isLoading && !report ? "Loading..." : report ? report.currentStatus : "Awaiting upload",
       detail: report
         ? `Current file: ${report.fileName}`
-        : "No SIWES report has been submitted yet.",
+        : "Upload your SIWES report to begin review.",
     },
     {
       label: "Score visibility",
@@ -51,8 +51,8 @@ export function StudentDashboardView() {
             : `${scores.total} / 100`,
       detail:
         scores?.status === "complete"
-          ? "All grading components are available."
-          : "Final grading remains locked until every score component is submitted.",
+          ? "All parts of your result are now available."
+          : "Your final result will appear after every score has been submitted.",
     },
   ];
 
@@ -84,7 +84,7 @@ export function StudentDashboardView() {
       <DashboardHero
         eyebrow="Student"
         title="Track your SIWES progress from onboarding to final grading"
-        description="This dashboard will evolve into the main student workspace for report submission, status tracking, and score review."
+        description="Use this dashboard to follow your report, check your progress, and see when scores become available."
       />
       <section className="grid gap-4 md:grid-cols-3">
         {studentStats.map((stat) => (
@@ -94,7 +94,7 @@ export function StudentDashboardView() {
       {isLoading && !dataError ? (
         <SurfaceCard>
           <p className="text-sm leading-6 text-muted">
-            Refreshing your profile, report status, and grading progress from the backend.
+            Updating your profile, report status, and scores.
           </p>
         </SurfaceCard>
       ) : null}
@@ -103,7 +103,7 @@ export function StudentDashboardView() {
           <p className="text-sm leading-6">
             {getApiErrorMessage(
               dataError,
-              "Some student dashboard data could not be loaded from the backend.",
+              "Some information could not be loaded right now.",
             )}
           </p>
         </SurfaceCard>
@@ -111,8 +111,11 @@ export function StudentDashboardView() {
       <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <SurfaceCard className="space-y-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Workflow</p>
-            <h3 className="mt-1 text-xl font-semibold">Current student progress</h3>
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Progress</p>
+            <h3 className="mt-1 text-xl font-semibold">Your SIWES checklist</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Follow each step from profile setup to final grading.
+            </p>
           </div>
           <div className="space-y-3">
             {progressRows.map((row) => (
@@ -132,8 +135,11 @@ export function StudentDashboardView() {
 
         <SurfaceCard className="space-y-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Recent state</p>
-            <h3 className="mt-1 text-xl font-semibold">What the system currently knows about you</h3>
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Overview</p>
+            <h3 className="mt-1 text-xl font-semibold">Your latest details</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Keep these details in view while your report and scores are being updated.
+            </p>
           </div>
           <div className="grid gap-3 text-sm text-muted">
             <div className="rounded-[1.2rem] border border-border/70 bg-background/60 px-4 py-3">

@@ -14,8 +14,8 @@ export function SupervisorScoreEntryPageView({
     <section className="space-y-6">
       <DashboardHero
         eyebrow="Score entry"
-        title="Submit a supervision score with the student record in view"
-        description="This route is structured for safe scoring and will later rely on backend validation for duplicate submission policies."
+        title="Enter a supervision score"
+        description="Review the student's details and submit the supervision score from this page."
       />
       <SupervisorScoreEntryForm matricNumber={decodeURIComponent(matricNumber)} />
     </section>

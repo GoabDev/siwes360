@@ -9,7 +9,7 @@ export function SupervisorSubmissionsList() {
   if (submissionsQuery.isLoading) {
     return (
       <SurfaceCard>
-        <p className="text-sm text-muted">Loading submitted supervision scores...</p>
+        <p className="text-sm text-muted">Loading your submitted scores...</p>
       </SurfaceCard>
     );
   }
@@ -18,7 +18,7 @@ export function SupervisorSubmissionsList() {
     return (
       <SurfaceCard>
         <p className="text-sm text-muted">
-          No supervision scores have been submitted yet. Submitted records will appear here.
+          You have not submitted any supervision scores yet.
         </p>
       </SurfaceCard>
     );

@@ -7,7 +7,7 @@ export function SupervisorSubmissionsPageView() {
       <DashboardHero
         eyebrow="Submissions"
         title="Review supervision scores you have already submitted"
-        description="This history will later align with backend permissions for edits, audit trails, and supervisor activity."
+        description="Look back at the supervision scores you have already submitted."
       />
       <SupervisorSubmissionsList />
     </section>

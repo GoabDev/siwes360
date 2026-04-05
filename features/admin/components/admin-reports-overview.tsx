@@ -82,8 +82,12 @@ export function AdminReportsOverview() {
 
   if (assessmentsQuery.isLoading || previewQuery.isLoading) {
     return (
-      <SurfaceCard>
-        <p className="text-sm text-muted">Loading assessment oversight data...</p>
+      <SurfaceCard className="space-y-3">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Reports overview</p>
+        <h3 className="text-xl font-semibold">Loading department grading summary</h3>
+        <p className="text-sm leading-6 text-muted">
+          Please wait while we gather the latest scores and finalization status.
+        </p>
       </SurfaceCard>
     );
   }
@@ -119,7 +123,7 @@ export function AdminReportsOverview() {
               onClick={handleBulkFinalize}
               disabled={bulkFinalizeMutation.isPending || Boolean(preview?.incompleteCount)}
             >
-              {bulkFinalizeMutation.isPending ? "Finalizing..." : "Bulk finalize ready records"}
+              {bulkFinalizeMutation.isPending ? "Finalizing..." : "Finalize ready assessments"}
             </Button>
             <Button
               type="button"
@@ -131,7 +135,7 @@ export function AdminReportsOverview() {
             </Button>
             {preview?.incompleteCount ? (
               <p className="text-sm text-muted">
-                Bulk finalize is blocked until incomplete assessments are resolved.
+                Some assessments still need attention before you can finalize them together.
               </p>
             ) : null}
           </div>
@@ -140,7 +144,7 @@ export function AdminReportsOverview() {
         <SurfaceCard className="space-y-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Finalize preview</p>
-            <h3 className="mt-1 text-xl font-semibold">Blocking records</h3>
+            <h3 className="mt-1 text-xl font-semibold">Students who still need attention</h3>
           </div>
           {preview?.items.length ? (
             <div className="space-y-3">
@@ -175,7 +179,7 @@ export function AdminReportsOverview() {
             </div>
           ) : (
             <div className="rounded-[1.35rem] border border-dashed border-border bg-background/60 p-4 text-sm text-muted">
-              No assessment preview records are available.
+              There is nothing to review here right now.
             </div>
           )}
         </SurfaceCard>
@@ -234,8 +238,10 @@ export function AdminReportsOverview() {
         </div>
 
         {!assessments.length ? (
-          <div className="px-5 pb-5 text-sm text-muted">
-            No assessment records matched the current filter.
+          <div className="px-5 pb-5">
+            <div className="rounded-[1.2rem] border border-dashed border-border bg-background/60 p-4 text-sm text-muted">
+              No students matched your current search or filter.
+            </div>
           </div>
         ) : (
           <>

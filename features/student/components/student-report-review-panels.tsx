@@ -17,7 +17,7 @@ export function StudentReportReviewPanels({
         <SectionHeading
           eyebrow="Review results"
           title="Validation summary is loading"
-          description="The backend validation report is being fetched for your most recent submission."
+          description="Your latest report feedback is being prepared."
         />
       </SurfaceCard>
     );
@@ -29,7 +29,7 @@ export function StudentReportReviewPanels({
         <SectionHeading
           eyebrow="Review results"
           title="No report under review"
-          description="Upload a SIWES report first to unlock the backend validation summary and rule results."
+          description="Upload a SIWES report to start seeing checks, feedback, and scores here."
         />
       </SurfaceCard>
     );
@@ -39,63 +39,66 @@ export function StudentReportReviewPanels({
   const warningRules = report.results.filter((item) => item.severity === "Warning");
   const failedRules = report.results.filter((item) => item.severity === "Fail");
 
-  return (
-    <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-      <SurfaceCard>
-        <SectionHeading
-          eyebrow="Formatting"
-          title="Document compliance checks"
-          description="These panels map directly to the backend validation report returned for the uploaded document."
-        />
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {[
-            { label: "Passed rules", value: `${passedRules.length}` },
-            { label: "Warnings", value: `${warningRules.length}` },
-            { label: "Failed rules", value: `${failedRules.length}` },
-          ].map((item) => (
-            <div key={item.label} className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">{item.label}</p>
-              <p className="mt-2 text-lg font-semibold">{item.value}</p>
-            </div>
-          ))}
-        </div>
-      </SurfaceCard>
+  function getSeverityStyles(severity: "Pass" | "Warning" | "Fail") {
+    if (severity === "Pass") {
+      return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    }
 
-      <SurfaceCard>
-        <SectionHeading
-          eyebrow="Validation"
-          title="Score and rule details"
-          description="The current backend exposes validation score and rule-level formatting or structure results."
-        />
-        <div className="mt-4 space-y-3">
-          <div className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Validation status</p>
-            <p className="mt-2 text-lg font-semibold">{report.status}</p>
+    if (severity === "Warning") {
+      return "bg-amber-50 text-amber-700 border-amber-200";
+    }
+
+    return "bg-rose-50 text-rose-700 border-rose-200";
+  }
+
+  return (
+    <SurfaceCard>
+      <SectionHeading
+        eyebrow="Validation"
+        title="Score, checks, and rule feedback"
+        description="See your overall validation result and review each formatting check in one place."
+      />
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        {[
+          { label: "Validation status", value: report.status },
+          {
+            label: "Report score",
+            value: report.score == null ? "Awaiting review" : `${report.score} / 100`,
+          },
+          { label: "Passed rules", value: `${passedRules.length}` },
+          { label: "Warnings", value: `${warningRules.length}` },
+          { label: "Failed rules", value: `${failedRules.length}` },
+        ].map((item) => (
+          <div key={item.label} className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">{item.label}</p>
+            <p className="mt-2 text-lg font-semibold">{item.value}</p>
           </div>
-          <div className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Report score</p>
-            <p className="mt-2 text-lg font-semibold">
-              {report.score == null ? "Awaiting review" : `${report.score} / 100`}
-            </p>
-          </div>
-          {report.results.length ? (
-            <div className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Latest rule feedback</p>
-              <div className="mt-3 space-y-3">
-                {report.results.slice(0, 4).map((result) => (
-                  <div key={result.ruleId} className="rounded-[1rem] border border-border/60 bg-background px-3 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium">{result.title}</p>
-                      <span className="text-xs font-medium text-muted">{result.severity}</span>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-muted">{result.details}</p>
+        ))}
+      </div>
+      {report.results.length ? (
+        <div className="mt-4 rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Rule feedback</p>
+          <div className="mt-3 space-y-3">
+            {report.results.map((result) => (
+              <div key={result.ruleId} className="rounded-[1rem] border border-border/60 bg-background px-3 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium">{result.title}</p>
+                    <p className="mt-1 text-xs text-muted">Rule: {result.ruleId}</p>
                   </div>
-                ))}
+                  <span
+                    className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getSeverityStyles(result.severity)}`}
+                  >
+                    {result.severity}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted">{result.details}</p>
+                <p className="mt-2 text-xs text-muted">Weight: {result.weight}</p>
               </div>
-            </div>
-          ) : null}
+            ))}
+          </div>
         </div>
-      </SurfaceCard>
-    </div>
+      ) : null}
+    </SurfaceCard>
   );
 }

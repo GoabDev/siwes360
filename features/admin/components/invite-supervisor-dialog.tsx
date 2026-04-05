@@ -82,10 +82,10 @@ export function InviteSupervisorDialog({
               Invite Supervisor
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-              Send department access
+              Invite a supervisor
             </h2>
             <p className="mt-3 text-sm leading-6 text-muted">
-              The backend will attach the invited supervisor to the selected department.
+              Enter the supervisor&apos;s details and choose the department they should belong to.
             </p>
           </div>
           <Button

@@ -7,7 +7,7 @@ export function SupervisorSearchPageView() {
       <DashboardHero
         eyebrow="Students"
         title="Review and search assigned students before scoring"
-        description="Browse students in your supervision scope, search by name or matric number, and continue directly into score entry."
+        description="Browse your students, search by name or matric number, and continue to scoring."
       />
       <SupervisorStudentsTable />
     </section>

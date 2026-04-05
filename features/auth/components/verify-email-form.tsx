@@ -79,12 +79,12 @@ export function VerifyEmailForm({
         <p className="mt-2 text-sm leading-6 text-muted">
           {isMissingVerificationParams
             ? "Open the verification link from your email, or request another verification email below."
-            : "Your verification link was detected. The page will confirm your email automatically."}
+            : "We found your verification link and will confirm your email automatically."}
         </p>
 
         {isMissingVerificationParams ? (
           <p className="mt-4 rounded-2xl border border-amber-500/25 bg-amber-500/8 p-4 text-sm text-amber-700">
-            This page needs both a `userId` and `token` in the URL before email confirmation can run.
+            This page needs a complete verification link before we can confirm your email.
           </p>
         ) : null}
 
@@ -138,7 +138,7 @@ export function VerifyEmailForm({
         <div className="rounded-[1.4rem] border border-border/70 bg-background/65 p-5">
           <h2 className="text-lg font-semibold">Resend verification email</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Enter the email address used during signup and we will trigger a new verification message.
+            Enter the email address you used to sign up and we will send another verification email.
           </p>
 
           <div className="mt-5">

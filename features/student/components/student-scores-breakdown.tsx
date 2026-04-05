@@ -22,11 +22,18 @@ export function StudentScoresBreakdown() {
       <DashboardHero
         eyebrow="Score breakdown"
         title="Monitor every grading component as it becomes available"
-        description="This view reflects the live assessment record returned for your student account, including validation, scoring, and finalization state."
+        description="See how each part of your SIWES assessment contributes to your final result."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
         <SurfaceCard className="grid gap-3 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Score details</p>
+            <h3 className="mt-1 text-xl font-semibold">How your result is built</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Each section below fills in as your report moves through review.
+            </p>
+          </div>
           {scoresQuery.isLoading ? (
             <div className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4 text-sm text-muted md:col-span-2">
               Loading your current assessment breakdown...
@@ -81,7 +88,7 @@ export function StudentScoresBreakdown() {
           <p className="text-sm leading-6 text-muted">
             {scores?.status === "complete"
               ? "All grading components are available."
-              : "The final result remains incomplete until every grading component has been submitted."}
+              : "Your final result will stay incomplete until all scoring stages are done."}
           </p>
         </SurfaceCard>
       </div>

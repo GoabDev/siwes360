@@ -6,8 +6,8 @@ export function AdminReportsPageView() {
     <section className="space-y-6">
       <DashboardHero
         eyebrow="Reports overview"
-        title="Review report readiness before final grading"
-        description="This view helps departmental admins understand which records are ready to move toward completion."
+        title="Review grading progress across your department"
+        description="See which students are ready for final grading and which ones still need attention."
       />
       <AdminReportsOverview />
     </section>

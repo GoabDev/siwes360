@@ -6,9 +6,11 @@ import { getApiErrorMessage } from "@/lib/api/error";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
 import type {
+  DocumentValidationStatus,
   StudentDocumentStatus,
   StudentDocumentUploadPayload,
   StudentDocumentUploadResult,
+  StudentValidationRuleResult,
   StudentValidationReport,
 } from "@/features/student/types/student-report";
 
@@ -33,6 +35,36 @@ type AssessmentDto = {
   documentSubmissionId?: string | null;
 };
 
+type RawStudentDocumentTimelineEvent = {
+  status?: string | number | null;
+  occurredAt?: string | null;
+  description?: string | null;
+};
+
+type RawStudentDocumentStatus = {
+  submissionId?: string | null;
+  fileName?: string | null;
+  currentStatus?: string | number | null;
+  timeline?: RawStudentDocumentTimelineEvent[] | null;
+};
+
+type RawStudentValidationRuleResult = {
+  ruleId?: string | null;
+  title?: string | null;
+  severity?: string | number | null;
+  weight?: number | null;
+  details?: string | null;
+};
+
+type RawStudentValidationReport = {
+  submissionId?: string | null;
+  fileName?: string | null;
+  status?: string | number | null;
+  score?: number | null;
+  validatedAt?: string | null;
+  results?: RawStudentValidationRuleResult[] | null;
+};
+
 type MockDocumentRecord = {
   submissionId: string;
   fileName: string;
@@ -41,8 +73,99 @@ type MockDocumentRecord = {
 
 const MOCK_STORAGE_KEY = "siwes360-student-document-record";
 
+const validationStatusMap: Record<number, DocumentValidationStatus> = {
+  1: "Uploaded",
+  2: "Processing",
+  3: "Queued",
+  4: "Validating",
+  5: "Passed",
+  6: "Completed",
+  7: "Failed",
+};
+
+const severityMap = {
+  1: "Pass",
+  2: "Warning",
+  3: "Fail",
+} as const;
+
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function normalizeValidationStatus(
+  value: string | number | null | undefined,
+): DocumentValidationStatus {
+  if (typeof value === "number") {
+    return validationStatusMap[value] ?? "Uploaded";
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    return value.trim() as DocumentValidationStatus;
+  }
+
+  return "Uploaded";
+}
+
+function normalizeSeverity(
+  value: string | number | null | undefined,
+): StudentValidationRuleResult["severity"] {
+  if (typeof value === "number") {
+    return severityMap[value as keyof typeof severityMap] ?? "Warning";
+  }
+
+  if (value === "Pass" || value === "Warning" || value === "Fail") {
+    return value;
+  }
+
+  return "Warning";
+}
+
+function normalizeStudentDocumentStatus(
+  submissionId: string,
+  payload: RawStudentDocumentStatus | StudentDocumentStatus | null | undefined,
+): StudentDocumentStatus | null {
+  if (!payload) {
+    return null;
+  }
+
+  return {
+    submissionId: payload.submissionId?.trim() || submissionId,
+    fileName: payload.fileName?.trim() || "Submitted report",
+    currentStatus: normalizeValidationStatus(payload.currentStatus),
+    timeline: (payload.timeline ?? []).map((event) => ({
+      status:
+        typeof event.status === "number"
+          ? normalizeValidationStatus(event.status)
+          : event.status?.trim() || "Updated",
+      occurredAt: event.occurredAt?.trim() || new Date().toISOString(),
+      description: event.description?.trim() || "Status updated.",
+    })),
+  };
+}
+
+function normalizeStudentValidationReport(
+  submissionId: string,
+  payload: RawStudentValidationReport | StudentValidationReport | null | undefined,
+): StudentValidationReport | null {
+  if (!payload) {
+    return null;
+  }
+
+  return {
+    submissionId: payload.submissionId?.trim() || submissionId,
+    fileName: payload.fileName?.trim() || "Submitted report",
+    status: normalizeValidationStatus(payload.status),
+    score: typeof payload.score === "number" ? payload.score : null,
+    validatedAt: payload.validatedAt?.trim() || null,
+    results: (payload.results ?? []).map((result) => ({
+      ruleId: result.ruleId?.trim() || "Rule",
+      title: result.title?.trim() || "Check",
+      severity: normalizeSeverity(result.severity),
+      weight: typeof result.weight === "number" ? result.weight : 0,
+      details: result.details?.trim() || "No details available.",
+    })),
+  };
 }
 
 function buildMockStatus(record: MockDocumentRecord): StudentDocumentStatus {
@@ -292,11 +415,11 @@ export async function getStudentDocumentStatus(
 
   if (hasConfiguredApiBaseUrl()) {
     try {
-      const response = await apiClient.get<ApiEnvelope<StudentDocumentStatus>>(
+      const response = await apiClient.get<ApiEnvelope<RawStudentDocumentStatus>>(
         apiEndpoints.document.status(submissionId),
       );
 
-      return response.data?.data ?? null;
+      return normalizeStudentDocumentStatus(submissionId, response.data?.data);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         clearStoredSubmissionId();
@@ -326,11 +449,11 @@ export async function getStudentValidationReport(
 
   if (hasConfiguredApiBaseUrl()) {
     try {
-      const response = await apiClient.get<ApiEnvelope<StudentValidationReport>>(
+      const response = await apiClient.get<ApiEnvelope<RawStudentValidationReport>>(
         apiEndpoints.document.validationReport(submissionId),
       );
 
-      return response.data?.data ?? null;
+      return normalizeStudentValidationReport(submissionId, response.data?.data);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         return null;

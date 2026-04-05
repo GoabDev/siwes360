@@ -157,10 +157,10 @@ export function StudentProfileForm() {
                 Student profile
               </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                Complete your SIWES identity details
+                Keep your profile up to date
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-                This form focuses on the core student identity data used across the student workflow.
+                Make sure your details are correct so your SIWES activities can be linked to your account.
               </p>
             </div>
           </div>
@@ -183,7 +183,7 @@ export function StudentProfileForm() {
         {profileQuery.isLoading ? (
           <div className="space-y-3 text-sm text-muted">
             <p>Loading student profile...</p>
-            <p>Fetching your identity record from the live backend profile endpoint.</p>
+            <p>Please wait while we load your details.</p>
           </div>
         ) : null}
 
@@ -191,8 +191,8 @@ export function StudentProfileForm() {
           <form onSubmit={onSubmit} className="space-y-6">
             <SectionHeading
               eyebrow="Identity"
-              title="Core student information"
-              description="This section anchors the student record used across all SIWES workflows."
+              title="Your personal information"
+              description="Update the details you want to use across your SIWES account."
             />
             <div className="grid gap-5 md:grid-cols-2">
               <FormField
@@ -261,8 +261,8 @@ export function StudentProfileForm() {
             </div>
 
             <div className="flex flex-col gap-2.5 rounded-[1.25rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
-              <p>Identity details now load from the live user profile endpoint.</p>
-              <p>Name and profile image now update through the live backend endpoint.</p>
+              <p>Your details are saved to your account and used across the platform.</p>
+              <p>You can also add or change your profile photo here.</p>
             </div>
 
             <Button

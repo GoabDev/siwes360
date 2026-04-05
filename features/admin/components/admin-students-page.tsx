@@ -7,7 +7,7 @@ export function AdminStudentsPageView() {
       <DashboardHero
         eyebrow="Department students"
         title="Review students in your department"
-        description="Open any student record to inspect their profile, then fetch grading status and score details on a dedicated page."
+        description="Open any student to view their details, check progress, and complete grading."
       />
       <AdminStudentsTable />
     </section>

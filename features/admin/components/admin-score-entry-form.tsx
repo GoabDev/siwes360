@@ -81,7 +81,7 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
   if (studentQuery.isLoading) {
     return (
       <SurfaceCard>
-        <p className="text-sm text-muted">Loading student grading record...</p>
+        <p className="text-sm text-muted">Loading student details...</p>
       </SurfaceCard>
     );
   }
@@ -89,7 +89,7 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
   if (!studentQuery.data) {
     return (
       <SurfaceCard>
-        <p className="text-sm text-muted">No student grading record was found for this matric number.</p>
+        <p className="text-sm text-muted">No student was found for this matric number.</p>
       </SurfaceCard>
     );
   }
@@ -98,10 +98,10 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
     return (
       <SurfaceCard className="space-y-3">
         <p className="text-sm text-muted">
-          This student does not have an assessment record yet.
+          This student is not ready for admin grading yet.
         </p>
         <p className="text-sm text-muted">
-          The student needs to upload and validate a report before admin scores can be entered.
+          The student needs to submit a report before you can enter scores here.
         </p>
       </SurfaceCard>
     );
@@ -132,10 +132,10 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
 
         <SurfaceCard className="space-y-3">
           <p className="text-sm text-muted">
-            This assessment has already been finalized on the backend.
+            This assessment has already been finalized.
           </p>
           <p className="text-sm text-muted">
-            Scores are now locked and cannot be edited until the record is unfinalized.
+            The scores are locked and cannot be changed unless the assessment is reopened.
           </p>
           <p className="text-sm text-muted">
             Finalized at: <span className="text-foreground">{student.finalizedAt ? new Date(student.finalizedAt).toLocaleString() : "N/A"}</span>
@@ -179,9 +179,16 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
       <SurfaceCard>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-5">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Admin scoring</p>
+              <h3 className="mt-1 text-xl font-semibold">Enter logbook and presentation scores</h3>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Save the scores here and keep the student on this page while you review the rest of the record.
+              </p>
+            </div>
             {(student.logbookScore !== null || student.presentationScore !== null) ? (
               <div className="rounded-[1.2rem] border border-border/70 bg-background/60 px-4 py-3 text-sm text-muted">
-                Existing admin scores can be updated here during development. Backend permissions can later restrict this to explicit edit rules.
+                Existing scores are shown here so you can review or update them before final submission.
               </div>
             ) : null}
             <FormField
@@ -239,7 +246,7 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
                 <FormItem>
                   <FormLabel>Grading note</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Short note about the grading context." {...field} />
+                    <Textarea placeholder="Add a short note if needed." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

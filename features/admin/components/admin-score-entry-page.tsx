@@ -12,8 +12,8 @@ export function AdminScoreEntryPageView({ matricNumber }: AdminScoreEntryPageVie
     <section className="space-y-6">
       <DashboardHero
         eyebrow="Score entry"
-        title="Capture logbook and presentation scores for a student"
-        description="This route closes the admin side of grading and will later rely on backend authorization and department matching."
+        title="Enter logbook and presentation scores"
+        description="Use this page to complete the remaining scores for a student."
       />
       <AdminScoreEntryForm matricNumber={decodeURIComponent(matricNumber)} />
     </section>

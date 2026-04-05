@@ -148,10 +148,10 @@ export function SupervisorProfileForm() {
                 Supervisor profile
               </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                Maintain the profile used during student assessment and search
+                Keep your supervisor profile up to date
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-                This form now loads the supervisor identity record from the same profile endpoint used across the app.
+                Make sure your details are correct so students and departments can identify you easily.
               </p>
             </div>
           </div>
@@ -174,7 +174,7 @@ export function SupervisorProfileForm() {
         {profileQuery.isLoading ? (
           <div className="space-y-3 text-sm text-muted">
             <p>Loading supervisor profile...</p>
-            <p>Fetching your identity record from the live backend profile endpoint.</p>
+            <p>Please wait while we load your details.</p>
           </div>
         ) : null}
 
@@ -182,8 +182,8 @@ export function SupervisorProfileForm() {
           <form onSubmit={onSubmit} className="space-y-6">
             <SectionHeading
               eyebrow="Identity"
-              title="Core supervisor information"
-              description="This section anchors the supervisor record used across search, assignment, and review flows."
+              title="Your personal information"
+              description="Update the details attached to your supervisor account."
             />
             <div className="grid gap-5 md:grid-cols-2">
               <FormField
@@ -228,8 +228,8 @@ export function SupervisorProfileForm() {
             </div>
 
             <div className="flex flex-col gap-2.5 rounded-[1.25rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
-              <p>Identity details now load from the live user profile endpoint.</p>
-              <p>Name and profile image now update through the same backend profile route used by the student flow.</p>
+              <p>Your details are used across your supervisor account.</p>
+              <p>You can also add or change your profile photo here.</p>
             </div>
 
             <Button

@@ -59,7 +59,7 @@ export function StudentReportStatusCard({
         </p>
       ) : (
         <p className="mt-4 text-sm leading-6 text-muted">
-          The backend will update this record as the document moves from queueing into validation.
+          This status will update as your report moves through review.
         </p>
       )}
     </div>

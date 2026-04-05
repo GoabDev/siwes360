@@ -30,10 +30,17 @@ export function StudentReportStatusPageView() {
       <DashboardHero
         eyebrow="Report status"
         title="Track review progress from upload through grading"
-        description="This page reflects the live backend document queue, validation timeline, and rule-based report output."
+        description="See where your report is in the review process and check the latest feedback."
       />
 
       <SurfaceCard className="space-y-5">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Submission tracker</p>
+          <h3 className="mt-1 text-xl font-semibold">Latest upload and review status</h3>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            This section updates as your document is uploaded, checked, and scored.
+          </p>
+        </div>
         {statusError ? (
           <div className="rounded-[1.35rem] border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             {getApiErrorMessage(statusError, "Unable to load your report status.")}

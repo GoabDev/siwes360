@@ -16,7 +16,7 @@ export function SupervisorStudentResultCard({
     return (
       <SurfaceCard>
         <p className="text-sm text-muted">
-          Search by matric number to retrieve a student record for supervision scoring.
+          Search by matric number to find a student and enter a supervision score.
         </p>
       </SurfaceCard>
     );
@@ -26,7 +26,7 @@ export function SupervisorStudentResultCard({
     return (
       <SurfaceCard>
         <p className="text-sm text-muted">
-          No student record was found for <span className="font-medium text-foreground">{searchedMatricNumber}</span>.
+          No student was found for <span className="font-medium text-foreground">{searchedMatricNumber}</span>.
         </p>
       </SurfaceCard>
     );
@@ -36,7 +36,7 @@ export function SupervisorStudentResultCard({
     <SurfaceCard className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Student record</p>
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Student details</p>
           <h3 className="mt-1 text-xl font-semibold">{student.fullName}</h3>
         </div>
         <span className="rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand">

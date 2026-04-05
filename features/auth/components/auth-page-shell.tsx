@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AuthBrandLink } from "@/features/auth/components/auth-brand-link";
 
 type AuthPageShellProps = {
   eyebrow: string;
@@ -24,6 +25,9 @@ export function AuthPageShell({
   return (
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(31,107,79,0.14),_transparent_35%),linear-gradient(180deg,_var(--background),_#ebe4d0)] px-6 py-12">
       <section className="w-full max-w-xl rounded-[2rem] border border-border/80 bg-surface/90 p-8 shadow-[0_30px_120px_rgba(17,75,55,0.08)]">
+        <div className="mb-6">
+          <AuthBrandLink />
+        </div>
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand">{eyebrow}</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight">{title}</h1>
         <p className="mt-4 text-base leading-7 text-muted">{description}</p>

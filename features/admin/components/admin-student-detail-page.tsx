@@ -35,12 +35,12 @@ export function AdminStudentDetailPageView({
     return (
       <section className="space-y-6">
         <DashboardHero
-          eyebrow="Student record"
+          eyebrow="Student details"
           title="Loading student information"
-          description="Preparing the student profile and grading workspace."
+          description="Please wait while the student's information is loaded."
         />
         <SurfaceCard>
-          <p className="text-sm text-muted">Loading student record...</p>
+          <p className="text-sm text-muted">Loading student details...</p>
         </SurfaceCard>
       </section>
     );
@@ -50,13 +50,13 @@ export function AdminStudentDetailPageView({
     return (
       <section className="space-y-6">
         <DashboardHero
-          eyebrow="Student record"
+          eyebrow="Student details"
           title="Student not found"
-          description="The selected student record is not available in the current directory response."
+          description="We could not find this student in your department list."
         />
         <SurfaceCard className="space-y-4">
           <p className="text-sm text-muted">
-            No student record was found for matric number {decodedMatricNumber}.
+            No student was found for matric number {decodedMatricNumber}.
           </p>
           <Button asChild variant="outline">
             <Link href="/admin/students">Back to students</Link>
@@ -112,9 +112,9 @@ export function AdminStudentDetailPageView({
   return (
     <section className="space-y-6">
       <DashboardHero
-        eyebrow="Student record"
+        eyebrow="Student details"
         title={student.fullName}
-        description="This page is now the single place to inspect a student and later fetch detailed report status, workflow, and grading data."
+        description="Review this student's information, progress, and scores in one place."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
@@ -122,20 +122,22 @@ export function AdminStudentDetailPageView({
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Student information</p>
             <h3 className="mt-1 text-xl font-semibold">{student.fullName}</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Keep these details in view while reviewing the student&apos;s assessment.
+            </p>
           </div>
-          <div className="grid gap-3 text-sm text-muted md:grid-cols-2">
-            <p>
-              Matric number: <span className="text-foreground">{student.matricNumber || "N/A"}</span>
-            </p>
-            <p>
-              Department: <span className="text-foreground">{student.department}</span>
-            </p>
-            <p>
-              Email: <span className="text-foreground">{student.email || "N/A"}</span>
-            </p>
-            <p>
-              Student ID: <span className="text-foreground">{student.studentId ?? "N/A"}</span>
-            </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            {[
+              ["Matric number", student.matricNumber || "N/A"],
+              ["Department", student.department],
+              ["Email", student.email || "N/A"],
+              ["Student ID", student.studentId ?? "N/A"],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-[1.2rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">{label}</p>
+                <p className="mt-2 text-foreground">{value}</p>
+              </div>
+            ))}
           </div>
         </SurfaceCard>
 
@@ -143,7 +145,7 @@ export function AdminStudentDetailPageView({
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Assessment summary</p>
             <h3 className="mt-1 text-xl font-semibold">
-              {student.assessmentId ? "Assessment record found" : "No assessment record yet"}
+              {student.assessmentId ? "Assessment available" : "Assessment not available yet"}
             </h3>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -166,37 +168,24 @@ export function AdminStudentDetailPageView({
               <span className="text-xs text-muted">Assessment ID: {student.assessmentId}</span>
             ) : null}
           </div>
-          <div className="grid gap-3 text-sm text-muted">
-            <p>
-              Validation score: <span className="text-foreground">{student.documentValidationScore ?? "Pending"}{student.documentValidationScore !== null ? " / 100" : ""}</span>
-            </p>
-            <p>
-              Report score: <span className="text-foreground">{student.reportScore ?? "Pending"} / 30</span>
-            </p>
-            <p>
-              Supervisor score: <span className="text-foreground">{student.supervisorScore ?? "Pending"} / 10</span>
-            </p>
-            <p>
-              Logbook score: <span className="text-foreground">{student.logbookScore ?? "Pending"} / 30</span>
-            </p>
-            <p>
-              Presentation score: <span className="text-foreground">{student.presentationScore ?? "Pending"} / 30</span>
-            </p>
-            <p>
-              Total: <span className="text-foreground">{student.totalScore ?? "Incomplete"}{student.totalScore !== null ? " / 100" : ""}</span>
-            </p>
-            <p>
-              Grade: <span className="text-foreground">{student.grade ?? "Pending"}</span>
-            </p>
-            <p>
-              Document submission: <span className="text-foreground">{student.documentSubmissionId ?? "Not linked"}</span>
-            </p>
-            <p>
-              Assessment created: <span className="text-foreground">{student.createdAt ? new Date(student.createdAt).toLocaleString() : "N/A"}</span>
-            </p>
-            <p>
-              Finalized at: <span className="text-foreground">{student.finalizedAt ? new Date(student.finalizedAt).toLocaleString() : "Not finalized"}</span>
-            </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            {[
+              ["Validation score", `${student.documentValidationScore ?? "Pending"}${student.documentValidationScore !== null ? " / 100" : ""}`],
+              ["Report score", `${student.reportScore ?? "Pending"} / 30`],
+              ["Supervisor score", `${student.supervisorScore ?? "Pending"} / 10`],
+              ["Logbook score", `${student.logbookScore ?? "Pending"} / 30`],
+              ["Presentation score", `${student.presentationScore ?? "Pending"} / 30`],
+              ["Total", `${student.totalScore ?? "Incomplete"}${student.totalScore !== null ? " / 100" : ""}`],
+              ["Grade", student.grade ?? "Pending"],
+              ["Document submission", student.documentSubmissionId ?? "Not linked"],
+              ["Assessment created", student.createdAt ? new Date(student.createdAt).toLocaleString() : "N/A"],
+              ["Finalized at", student.finalizedAt ? new Date(student.finalizedAt).toLocaleString() : "Not finalized"],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-[1.2rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">{label}</p>
+                <p className="mt-2 text-foreground">{value}</p>
+              </div>
+            ))}
           </div>
           <div className="grid gap-3 rounded-[1.2rem] border border-border/70 bg-background/60 p-4 text-sm text-muted md:grid-cols-2">
             <p>
@@ -236,12 +225,12 @@ export function AdminStudentDetailPageView({
             <h3 className="mt-1 text-xl font-semibold">Reopen this assessment</h3>
           </div>
           <p className="text-sm text-muted">
-            The backend requires a reason before a finalized assessment can be reopened.
+            Please tell us why this assessment should be reopened.
           </p>
           <Textarea
             value={unfinalizeReason}
             onChange={(event) => setUnfinalizeReason(event.target.value)}
-            placeholder="State why this finalized assessment should be reopened."
+            placeholder="Explain why you want to reopen this assessment."
           />
           <div className="flex flex-wrap gap-3">
             <Button
@@ -259,7 +248,7 @@ export function AdminStudentDetailPageView({
       <section className="space-y-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Scoring</p>
-          <h3 className="mt-1 text-xl font-semibold">Capture admin scores on this page</h3>
+          <h3 className="mt-1 text-xl font-semibold">Enter admin scores here</h3>
         </div>
         <AdminScoreEntryForm matricNumber={student.matricNumber} />
       </section>
@@ -267,7 +256,7 @@ export function AdminStudentDetailPageView({
       <SurfaceCard className="space-y-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Audit log</p>
-          <h3 className="mt-1 text-xl font-semibold">Assessment activity history</h3>
+          <h3 className="mt-1 text-xl font-semibold">Activity history</h3>
         </div>
         {auditLogQuery.isLoading ? (
           <div className="rounded-[1.35rem] border border-dashed border-border bg-background/60 p-4 text-sm text-muted">
