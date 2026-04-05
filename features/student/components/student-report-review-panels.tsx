@@ -4,9 +4,25 @@ import type { StudentValidationReport } from "@/features/student/types/student-r
 
 type StudentReportReviewPanelsProps = {
   report: StudentValidationReport | null;
+  isLoading?: boolean;
 };
 
-export function StudentReportReviewPanels({ report }: StudentReportReviewPanelsProps) {
+export function StudentReportReviewPanels({
+  report,
+  isLoading = false,
+}: StudentReportReviewPanelsProps) {
+  if (isLoading) {
+    return (
+      <SurfaceCard>
+        <SectionHeading
+          eyebrow="Review results"
+          title="Validation summary is loading"
+          description="The backend validation report is being fetched for your most recent submission."
+        />
+      </SurfaceCard>
+    );
+  }
+
   if (!report) {
     return (
       <SurfaceCard>

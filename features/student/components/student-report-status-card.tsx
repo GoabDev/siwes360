@@ -6,13 +6,26 @@ import type {
 type StudentReportStatusCardProps = {
   status: StudentDocumentStatus | null;
   report: StudentValidationReport | null;
+  isLoading?: boolean;
 };
 
 function getUploadedAt(status: StudentDocumentStatus | null) {
   return status?.timeline.find((item) => item.status === "Uploaded")?.occurredAt ?? null;
 }
 
-export function StudentReportStatusCard({ status, report }: StudentReportStatusCardProps) {
+export function StudentReportStatusCard({
+  status,
+  report,
+  isLoading = false,
+}: StudentReportStatusCardProps) {
+  if (isLoading) {
+    return (
+      <div className="rounded-[1.35rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
+        Loading your latest report submission and validation state...
+      </div>
+    );
+  }
+
   if (!status) {
     return (
       <div className="rounded-[1.35rem] border border-dashed border-border bg-background/60 p-4 text-sm text-muted">

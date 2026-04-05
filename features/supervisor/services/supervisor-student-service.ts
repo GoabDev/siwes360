@@ -17,29 +17,59 @@ const mockStudents: SupervisorStudentRecord[] = [
     assessmentId: "mock-assessment-1",
     matricNumber: "CSC/2021/014",
     fullName: "Johnson Adebayo",
+    email: "johnson@example.com",
     department: "Computer Science",
-    placementCompany: "Interswitch",
-    placementAddress: "12 Marina Road, Lagos",
+    documentSubmissionId: "mock-document-1",
+    documentValidationScore: 84,
+    reportScore: 25,
+    supervisorScore: null,
+    logbookScore: null,
+    presentationScore: null,
+    totalScore: 25,
+    grade: null,
+    isComplete: false,
+    isFinalized: false,
+    createdAt: new Date().toISOString(),
     status: "pending",
   },
   {
     assessmentId: "mock-assessment-2",
     matricNumber: "IFT/2021/009",
     fullName: "Mariam Sani",
+    email: "mariam@example.com",
     department: "Information Technology",
-    placementCompany: "MainOne",
-    placementAddress: "Plot 5 Adeola Odeku, Victoria Island",
-    status: "pending",
+    documentSubmissionId: "mock-document-2",
+    documentValidationScore: 91,
+    reportScore: 27,
+    supervisorScore: 8,
+    logbookScore: 24,
+    presentationScore: 25,
+    totalScore: 84,
+    grade: "A",
+    isComplete: true,
+    isFinalized: true,
+    createdAt: new Date().toISOString(),
+    status: "finalized",
   },
 ];
 
 type AssessmentSummaryDto = {
   id: string;
+  studentId: string;
   matricNumber: string;
   studentFullName: string;
+  studentEmail: string;
+  documentSubmissionId?: string | null;
+  documentValidationScore?: number | null;
+  reportScore?: number | null;
   supervisorScore?: number | null;
+  logbookScore?: number | null;
+  presentationScore?: number | null;
+  totalScore?: number;
+  grade?: string | null;
   isComplete?: boolean;
   isFinalized?: boolean;
+  createdAt?: string;
 };
 
 type PaginatedAssessmentResponse = {
@@ -80,12 +110,24 @@ function mapAssessmentToSupervisorStudent(
     assessmentId: assessment.id,
     matricNumber: assessment.matricNumber,
     fullName: assessment.studentFullName,
+    email: assessment.studentEmail,
     department: "Assigned department",
-    placementCompany: "Placement details not available from assessment record",
-    placementAddress: "Placement address not available from assessment record",
-    status: assessment.supervisorScore !== null && assessment.supervisorScore !== undefined
-      ? "scored"
-      : "pending",
+    documentSubmissionId: assessment.documentSubmissionId ?? null,
+    documentValidationScore: assessment.documentValidationScore ?? null,
+    reportScore: assessment.reportScore ?? null,
+    supervisorScore: assessment.supervisorScore ?? null,
+    logbookScore: assessment.logbookScore ?? null,
+    presentationScore: assessment.presentationScore ?? null,
+    totalScore: assessment.totalScore ?? 0,
+    grade: assessment.grade ?? null,
+    isComplete: Boolean(assessment.isComplete),
+    isFinalized: Boolean(assessment.isFinalized),
+    createdAt: assessment.createdAt ?? null,
+    status: assessment.isFinalized
+      ? "finalized"
+      : assessment.supervisorScore !== null && assessment.supervisorScore !== undefined
+        ? "scored"
+        : "pending",
   };
 }
 
@@ -101,7 +143,7 @@ function mapAssessmentToSubmission(
     matricNumber: assessment.matricNumber,
     fullName: assessment.studentFullName,
     score: assessment.supervisorScore,
-    submittedAt: new Date().toISOString(),
+    submittedAt: assessment.createdAt ?? new Date().toISOString(),
   };
 }
 

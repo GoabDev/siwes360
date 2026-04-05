@@ -1,6 +1,8 @@
 "use client";
 
+import axios from "axios";
 import { apiClient } from "@/lib/api/client";
+import { getApiErrorMessage } from "@/lib/api/error";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
 import type {
@@ -188,7 +190,15 @@ export function setStoredSubmissionId(submissionId: string) {
   }
 }
 
+export function clearStoredSubmissionId() {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(SUBMISSION_ID_STORAGE_KEY);
+  }
+}
+
 export async function getCurrentStudentSubmissionId() {
+  const storedSubmissionId = getStoredSubmissionId();
+
   if (hasConfiguredApiBaseUrl()) {
     try {
       const profileResponse = await apiClient.get<UserProfileApiResponse>(
@@ -197,7 +207,7 @@ export async function getCurrentStudentSubmissionId() {
       const studentId = profileResponse.data?.data?.id?.trim();
 
       if (!studentId) {
-        return getStoredSubmissionId();
+        return storedSubmissionId;
       }
 
       const assessmentResponse = await apiClient.get<ApiEnvelope<AssessmentDto>>(
@@ -209,14 +219,20 @@ export async function getCurrentStudentSubmissionId() {
         setStoredSubmissionId(submissionId);
         return submissionId;
       }
-    } catch {
-      return getStoredSubmissionId();
-    }
+      clearStoredSubmissionId();
+      return null;
+    } catch (error) {
+      if (storedSubmissionId) {
+        return storedSubmissionId;
+      }
 
-    return getStoredSubmissionId();
+      throw new Error(
+        getApiErrorMessage(error, "Unable to determine your current report submission."),
+      );
+    }
   }
 
-  return getStoredSubmissionId();
+  return storedSubmissionId;
 }
 
 export async function uploadStudentDocument(
@@ -275,11 +291,20 @@ export async function getStudentDocumentStatus(
   }
 
   if (hasConfiguredApiBaseUrl()) {
-    const response = await apiClient.get<ApiEnvelope<StudentDocumentStatus>>(
-      apiEndpoints.document.status(submissionId),
-    );
+    try {
+      const response = await apiClient.get<ApiEnvelope<StudentDocumentStatus>>(
+        apiEndpoints.document.status(submissionId),
+      );
 
-    return response.data?.data ?? null;
+      return response.data?.data ?? null;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        clearStoredSubmissionId();
+        return null;
+      }
+
+      throw new Error(getApiErrorMessage(error, "Unable to load your report status."));
+    }
   }
 
   await wait(250);
@@ -300,11 +325,19 @@ export async function getStudentValidationReport(
   }
 
   if (hasConfiguredApiBaseUrl()) {
-    const response = await apiClient.get<ApiEnvelope<StudentValidationReport>>(
-      apiEndpoints.document.validationReport(submissionId),
-    );
+    try {
+      const response = await apiClient.get<ApiEnvelope<StudentValidationReport>>(
+        apiEndpoints.document.validationReport(submissionId),
+      );
 
-    return response.data?.data ?? null;
+      return response.data?.data ?? null;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return null;
+      }
+
+      throw new Error(getApiErrorMessage(error, "Unable to load your validation report."));
+    }
   }
 
   await wait(250);

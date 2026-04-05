@@ -2,9 +2,21 @@ import type { StudentDocumentTimelineEvent } from "@/features/student/types/stud
 
 type StudentReportTimelineProps = {
   timeline: StudentDocumentTimelineEvent[];
+  isLoading?: boolean;
 };
 
-export function StudentReportTimeline({ timeline }: StudentReportTimelineProps) {
+export function StudentReportTimeline({
+  timeline,
+  isLoading = false,
+}: StudentReportTimelineProps) {
+  if (isLoading) {
+    return (
+      <div className="rounded-[1.35rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
+        Loading report timeline events...
+      </div>
+    );
+  }
+
   if (!timeline.length) {
     return (
       <div className="rounded-[1.35rem] border border-dashed border-border bg-background/60 p-4 text-sm text-muted">

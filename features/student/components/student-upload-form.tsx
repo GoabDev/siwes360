@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { FileText, UploadCloud } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +25,7 @@ import {
 import {
   useStoredStudentSubmissionIdQuery,
   useStudentDocumentStatusQuery,
+  useStudentValidationReportQuery,
   useUploadStudentDocumentMutation,
 } from "@/features/student/queries/student-report-queries";
 import { getApiErrorMessage } from "@/lib/api/error";
@@ -36,13 +37,19 @@ const defaultValues = {
 export function StudentUploadForm() {
   const submissionIdQuery = useStoredStudentSubmissionIdQuery();
   const statusQuery = useStudentDocumentStatusQuery(submissionIdQuery.data);
+  const validationReportQuery = useStudentValidationReportQuery(submissionIdQuery.data);
   const uploadMutation = useUploadStudentDocumentMutation();
+  const isStatusLoading =
+    submissionIdQuery.isLoading || statusQuery.isLoading || validationReportQuery.isLoading;
 
   const form = useForm<StudentReportSchema>({
     resolver: zodResolver(studentReportSchema),
     defaultValues,
   });
-  const selectedFile = form.watch("file");
+  const selectedFile = useWatch({
+    control: form.control,
+    name: "file",
+  });
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
@@ -100,10 +107,16 @@ export function StudentUploadForm() {
               Current submission
             </p>
             <h3 className="mt-1 text-xl font-semibold">
-              {statusQuery.data ? "Track your latest upload immediately" : "No active submission yet"}
+              {isStatusLoading
+                ? "Loading your current submission"
+                : statusQuery.data
+                  ? "Track your latest upload immediately"
+                  : "No active submission yet"}
             </h3>
             <p className="mt-2 text-sm leading-6 text-muted">
-              {statusQuery.data
+              {isStatusLoading
+                ? "Checking the latest submission and validation state attached to your account."
+                : statusQuery.data
                 ? "The upload page now reflects the live backend queue and validation state as soon as your file is submitted."
                 : "After upload, the latest document status will appear here without leaving the page."}
             </p>
@@ -113,7 +126,20 @@ export function StudentUploadForm() {
           </Button>
         </div>
 
-        <StudentReportStatusCard status={statusQuery.data ?? null} report={null} />
+        {submissionIdQuery.error || statusQuery.error || validationReportQuery.error ? (
+          <div className="rounded-[1.35rem] border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            {getApiErrorMessage(
+              submissionIdQuery.error ?? statusQuery.error ?? validationReportQuery.error,
+              "Unable to load your current report status.",
+            )}
+          </div>
+        ) : null}
+
+        <StudentReportStatusCard
+          status={statusQuery.data ?? null}
+          report={validationReportQuery.data ?? null}
+          isLoading={isStatusLoading && !(submissionIdQuery.error || statusQuery.error || validationReportQuery.error)}
+        />
       </div>
 
       <SurfaceCard>

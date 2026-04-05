@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,6 @@ type AdminScoreEntryFormProps = {
 };
 
 export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) {
-  const router = useRouter();
   const studentQuery = useAdminStudentQuery(matricNumber);
   const submitMutation = useSubmitAdminScoresMutation();
 
@@ -43,6 +42,20 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
       note: "",
     },
   });
+
+  const student = studentQuery.data;
+
+  useEffect(() => {
+    if (!student) {
+      return;
+    }
+
+    form.reset({
+      logbookScore: student.logbookScore ?? 0,
+      presentationScore: student.presentationScore ?? 0,
+      note: "",
+    });
+  }, [form, student]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
@@ -60,7 +73,6 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
           error: (error) => getApiErrorMessage(error, "Unable to save admin scores."),
         },
       );
-      router.push("/admin/students");
     } catch {
       return;
     }
@@ -82,8 +94,6 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
     );
   }
 
-  const student = studentQuery.data;
-
   if (!student.assessmentId) {
     return (
       <SurfaceCard className="space-y-3">
@@ -94,6 +104,44 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
           The student needs to upload and validate a report before admin scores can be entered.
         </p>
       </SurfaceCard>
+    );
+  }
+
+  if (student.isFinalized) {
+    return (
+      <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+        <SurfaceCard className="space-y-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Student summary</p>
+            <h3 className="mt-1 text-xl font-semibold">{student.fullName}</h3>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge label={student.status} variant="success" />
+            <StatusBadge label="Finalized" variant="success" />
+          </div>
+          <div className="grid gap-3 text-sm text-muted">
+            <p>Matric number: <span className="text-foreground">{student.matricNumber}</span></p>
+            <p>Department: <span className="text-foreground">{student.department}</span></p>
+            <p>Report score: <span className="text-foreground">{student.reportScore ?? "Pending"} / 30</span></p>
+            <p>Supervisor score: <span className="text-foreground">{student.supervisorScore ?? "Pending"} / 10</span></p>
+            <p>Logbook score: <span className="text-foreground">{student.logbookScore ?? "Pending"} / 30</span></p>
+            <p>Presentation score: <span className="text-foreground">{student.presentationScore ?? "Pending"} / 30</span></p>
+            <p>Grade: <span className="text-foreground">{student.grade ?? "Pending"}</span></p>
+          </div>
+        </SurfaceCard>
+
+        <SurfaceCard className="space-y-3">
+          <p className="text-sm text-muted">
+            This assessment has already been finalized on the backend.
+          </p>
+          <p className="text-sm text-muted">
+            Scores are now locked and cannot be edited until the record is unfinalized.
+          </p>
+          <p className="text-sm text-muted">
+            Finalized at: <span className="text-foreground">{student.finalizedAt ? new Date(student.finalizedAt).toLocaleString() : "N/A"}</span>
+          </p>
+        </SurfaceCard>
+      </div>
     );
   }
 
@@ -113,8 +161,9 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
                 : student.status === "ready"
                   ? "warning"
                   : "pending"
-            }
+              }
           />
+          <StatusBadge label="Editable" variant="neutral" />
           {(student.logbookScore !== null || student.presentationScore !== null) ? (
             <StatusBadge label="Editable draft" variant="neutral" />
           ) : null}

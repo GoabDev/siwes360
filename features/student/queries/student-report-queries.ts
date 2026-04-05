@@ -48,6 +48,10 @@ export function useStudentValidationReportQuery(
     queryKey: studentValidationReportKey(submissionId ?? ""),
     queryFn: () => getStudentValidationReport(submissionId ?? ""),
     enabled: Boolean(submissionId) && enabled,
+    refetchInterval: (query) => {
+      const report = query.state.data;
+      return report && report.validatedAt == null ? 4_000 : false;
+    },
   });
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,9 +24,6 @@ export function VerifyEmailForm({
   email = "",
 }: VerifyEmailFormProps) {
   const confirmEmailMutation = useConfirmEmailMutation();
-  const [verificationState, setVerificationState] = useState<"idle" | "success" | "error">(
-    "idle",
-  );
   const autoSubmitTriggeredRef = useRef(false);
 
   const confirmValues = useMemo(
@@ -42,18 +39,17 @@ export function VerifyEmailForm({
     [confirmValues],
   );
 
-  async function runEmailVerification(payload: ConfirmEmailSchema) {
+  const runEmailVerification = useCallback(async (payload: ConfirmEmailSchema) => {
     try {
       await toast.promise(confirmEmailMutation.mutateAsync(payload), {
         loading: "Verifying your email...",
         success: (data) => data.message,
         error: (error) => getApiErrorMessage(error, "Unable to verify your email."),
       });
-      setVerificationState("success");
     } catch {
-      setVerificationState("error");
+      return;
     }
-  }
+  }, [confirmEmailMutation]);
 
   useEffect(() => {
     if (autoSubmitTriggeredRef.current || !confirmParseResult.success) {
@@ -65,14 +61,16 @@ export function VerifyEmailForm({
     const payload: ConfirmEmailSchema = confirmParseResult.data;
 
     void runEmailVerification(payload);
-  }, [confirmEmailMutation, confirmParseResult]);
+  }, [confirmParseResult, runEmailVerification]);
 
   const isMissingVerificationParams = !userId.trim() || !token.trim();
   const verificationErrorMessage = confirmParseResult.success
     ? null
     : confirmParseResult.error.issues[0]?.message ?? "Verification link is invalid.";
   const isVerifying = confirmEmailMutation.isPending;
-  const shouldHideResendSection = isVerifying || verificationState === "success";
+  const isVerified = confirmEmailMutation.isSuccess;
+  const verificationFailed = confirmEmailMutation.isError;
+  const shouldHideResendSection = isVerifying || isVerified;
 
   return (
     <div className="space-y-6">
@@ -101,12 +99,12 @@ export function VerifyEmailForm({
             {isVerifying ? (
               <p>Verification in progress. This usually takes a moment.</p>
             ) : null}
-            {verificationState === "success" ? (
+            {isVerified ? (
               <p className="text-brand-strong">
                 Your email has been verified. You can continue to the login page.
               </p>
             ) : null}
-            {verificationState === "error" ? (
+            {verificationFailed ? (
               <p className="text-destructive">
                 Verification failed. Request another email below or retry from the message in your inbox.
               </p>
@@ -118,7 +116,7 @@ export function VerifyEmailForm({
           <Button asChild variant="outline">
             <Link href="/auth/login">Go to login</Link>
           </Button>
-          {verificationState === "success" ? null : (
+          {isVerified ? null : (
             <Button
               type="button"
               onClick={() => {
@@ -126,7 +124,6 @@ export function VerifyEmailForm({
                   return;
                 }
 
-                setVerificationState("idle");
                 void runEmailVerification(confirmParseResult.data);
               }}
               disabled={!confirmParseResult.success || isVerifying}

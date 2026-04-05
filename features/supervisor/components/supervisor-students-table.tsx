@@ -63,11 +63,12 @@ export function SupervisorStudentsTable() {
         </span>
       </div>
 
-      <div className="grid grid-cols-[1.2fr_0.85fr_0.8fr_1fr_0.9fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
-        <span>Name</span>
+      <div className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.8fr_0.8fr_0.9fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
+        <span>Student</span>
         <span>Matric</span>
         <span>Status</span>
-        <span>Placement</span>
+        <span>Report</span>
+        <span>Total</span>
         <span>Action</span>
       </div>
 
@@ -75,26 +76,36 @@ export function SupervisorStudentsTable() {
         {studentsQuery.data.items.map((student) => (
           <div
             key={student.matricNumber}
-            className="grid grid-cols-[1.2fr_0.85fr_0.8fr_1fr_0.9fr] gap-4 px-5 py-4 text-sm"
+            className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.8fr_0.8fr_0.9fr] gap-4 px-5 py-4 text-sm"
           >
             <div>
               <p className="font-medium">{student.fullName}</p>
-              <p className="mt-1 text-xs text-muted">{student.department}</p>
+              <p className="mt-1 text-xs text-muted">{student.email}</p>
             </div>
             <span className="text-muted">{student.matricNumber}</span>
             <div className="flex items-start">
               <StatusBadge
-                label={student.status === "scored" ? "Scored" : "Pending"}
-                variant={student.status === "scored" ? "success" : "pending"}
+                label={
+                  student.status === "finalized"
+                    ? "Finalized"
+                    : student.status === "scored"
+                      ? "Scored"
+                      : "Pending"
+                }
+                variant={
+                  student.status === "finalized"
+                    ? "success"
+                    : student.status === "scored"
+                      ? "warning"
+                      : "pending"
+                }
               />
             </div>
-            <div>
-              <p>{student.placementCompany}</p>
-              <p className="mt-1 text-xs text-muted">{student.placementAddress}</p>
-            </div>
+            <span>{student.reportScore === null ? "Pending / 30" : `${student.reportScore} / 30`}</span>
+            <span>{student.isComplete ? `${student.totalScore} / 100` : "Incomplete"}</span>
             <Button asChild size="sm" variant="outline">
               <Link href={`/supervisor/score-entry/${encodeURIComponent(student.matricNumber)}`}>
-                {student.status === "scored" ? "Review" : "Score"}
+                {student.status === "finalized" ? "View" : student.status === "scored" ? "Review" : "Score"}
               </Link>
             </Button>
           </div>

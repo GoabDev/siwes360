@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,7 +25,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SurfaceCard } from "@/components/ui/surface-card";
-import { Textarea } from "@/components/ui/textarea";
 import { departments } from "@/features/student/constants/departments";
 import {
   studentProfileSchema,

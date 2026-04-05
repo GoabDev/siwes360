@@ -2,10 +2,20 @@ export type SupervisorStudentRecord = {
   assessmentId: string;
   matricNumber: string;
   fullName: string;
+  email: string;
   department: string;
-  placementCompany: string;
-  placementAddress: string;
-  status: "pending" | "scored";
+  documentSubmissionId: string | null;
+  documentValidationScore: number | null;
+  reportScore: number | null;
+  supervisorScore: number | null;
+  logbookScore: number | null;
+  presentationScore: number | null;
+  totalScore: number;
+  grade: string | null;
+  isComplete: boolean;
+  isFinalized: boolean;
+  createdAt: string | null;
+  status: "pending" | "scored" | "finalized";
 };
 
 export type SupervisorStudentsQueryParams = {

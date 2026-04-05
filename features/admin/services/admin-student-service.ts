@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { apiClient } from "@/lib/api/client";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
@@ -53,80 +54,74 @@ type PaginatedUserProfileEnvelope = {
 
 type PaginatedUserProfileObject = Exclude<PaginatedUserProfilePayload, UserProfileStudentRecord[]>;
 
+type AssessmentApiEnvelope<T> = {
+  success?: boolean;
+  message?: string;
+  data?: T | null;
+};
+
+type AssessmentDto = {
+  id: string;
+  studentId: string;
+  studentFullName?: string;
+  studentEmail?: string;
+  matricNumber?: string;
+  documentSubmissionId?: string | null;
+  documentValidationScore?: number | null;
+  reportScore?: number | null;
+  supervisorScore?: number | null;
+  supervisorId?: string | null;
+  supervisorFullName?: string | null;
+  supervisorScoredAt?: string | null;
+  logbookScore?: number | null;
+  presentationScore?: number | null;
+  adminId?: string | null;
+  adminFullName?: string | null;
+  adminScoredAt?: string | null;
+  totalScore?: number | null;
+  isComplete?: boolean;
+  isFinalized?: boolean;
+  grade?: string | null;
+  finalizedAt?: string | null;
+  createdAt?: string;
+};
+
 const baseStudents = [
   { assessmentId: "mock-assessment-1", matricNumber: "CSC/2021/014", fullName: "Johnson Adebayo", department: "Computer Science" },
   { assessmentId: "mock-assessment-2", matricNumber: "IFT/2021/009", fullName: "Mariam Sani", department: "Information Technology" },
   { assessmentId: "mock-assessment-3", matricNumber: "CSC/2021/021", fullName: "David Ekanem", department: "Computer Science" },
 ];
 
-type AssessmentSummaryDto = {
-  id: string;
-  studentId: string;
-  studentFullName: string;
-  studentEmail: string;
-  matricNumber: string;
-  documentSubmissionId?: string | null;
-  documentValidationScore?: number | null;
-  reportScore?: number | null;
-  supervisorScore?: number | null;
-  logbookScore?: number | null;
-  presentationScore?: number | null;
-  totalScore: number;
-  isComplete: boolean;
-  isFinalized: boolean;
-  grade?: string | null;
-  createdAt: string;
-};
-
-type PaginatedAssessmentResponse = {
-  success?: boolean;
-  message?: string;
-  data?: {
-    items?: AssessmentSummaryDto[];
-    pageNumber?: number;
-    pageSize?: number;
-    totalCount?: number;
-    totalPages?: number;
-  } | null;
-};
-
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function mapAssessmentToAdminRecord(assessment: AssessmentSummaryDto): AdminStudentRecord {
-  const hasPartialScores =
-    assessment.reportScore !== null ||
-    assessment.supervisorScore !== null ||
-    assessment.logbookScore !== null ||
-    assessment.presentationScore !== null;
-
-  return {
-    assessmentId: assessment.id,
-    matricNumber: assessment.matricNumber,
-    fullName: assessment.studentFullName,
-    department: "Assigned department",
-    reportScore: assessment.reportScore ?? null,
-    supervisorScore: assessment.supervisorScore ?? null,
-    logbookScore: assessment.logbookScore ?? null,
-    presentationScore: assessment.presentationScore ?? null,
-    totalScore: assessment.isComplete ? assessment.totalScore : null,
-    status: assessment.isComplete ? "complete" : hasPartialScores ? "ready" : "incomplete",
-  };
-}
-
 function mapUserProfileStudentToAdminRecord(student: UserProfileStudentRecord): AdminStudentRecord {
   return {
+    studentId: student.id ?? null,
     assessmentId: null,
     matricNumber: student.matricNo ?? "",
     fullName: `${student.firstname ?? ""} ${student.lastname ?? ""}`.trim() || "Unnamed student",
+    email: student.email ?? "",
     department: student.departmentName ?? "Unknown department",
+    documentSubmissionId: null,
+    documentValidationScore: null,
     reportScore: null,
     supervisorScore: null,
+    supervisorId: null,
+    supervisorFullName: null,
+    supervisorScoredAt: null,
     logbookScore: null,
     presentationScore: null,
+    adminId: null,
+    adminFullName: null,
+    adminScoredAt: null,
     totalScore: null,
     status: "incomplete",
+    isFinalized: false,
+    grade: null,
+    finalizedAt: null,
+    createdAt: null,
   };
 }
 
@@ -166,28 +161,60 @@ function parsePaginatedStudentsResponse(
 
 function mergeStudentWithAssessment(
   student: AdminStudentRecord,
-  assessment: AssessmentSummaryDto | undefined,
+  assessment: AssessmentDto | null,
 ): AdminStudentRecord {
   if (!assessment) {
     return student;
   }
 
   const hasPartialScores =
-    assessment.reportScore !== null ||
-    assessment.supervisorScore !== null ||
-    assessment.logbookScore !== null ||
-    assessment.presentationScore !== null;
+    assessment.reportScore !== null && assessment.reportScore !== undefined ||
+    assessment.supervisorScore !== null && assessment.supervisorScore !== undefined ||
+    assessment.logbookScore !== null && assessment.logbookScore !== undefined ||
+    assessment.presentationScore !== null && assessment.presentationScore !== undefined;
 
   return {
     ...student,
     assessmentId: assessment.id,
+    documentSubmissionId: assessment.documentSubmissionId ?? null,
+    documentValidationScore: assessment.documentValidationScore ?? null,
     reportScore: assessment.reportScore ?? null,
     supervisorScore: assessment.supervisorScore ?? null,
+    supervisorId: assessment.supervisorId ?? null,
+    supervisorFullName: assessment.supervisorFullName ?? null,
+    supervisorScoredAt: assessment.supervisorScoredAt ?? null,
     logbookScore: assessment.logbookScore ?? null,
     presentationScore: assessment.presentationScore ?? null,
-    totalScore: assessment.isComplete ? assessment.totalScore : null,
+    adminId: assessment.adminId ?? null,
+    adminFullName: assessment.adminFullName ?? null,
+    adminScoredAt: assessment.adminScoredAt ?? null,
+    totalScore: assessment.isComplete ? (assessment.totalScore ?? null) : null,
     status: assessment.isComplete ? "complete" : hasPartialScores ? "ready" : "incomplete",
+    isFinalized: Boolean(assessment.isFinalized),
+    grade: assessment.grade ?? null,
+    finalizedAt: assessment.finalizedAt ?? null,
+    createdAt: assessment.createdAt ?? null,
   };
+}
+
+async function getAssessmentByStudentId(studentId: string) {
+  if (!studentId.trim()) {
+    return null;
+  }
+
+  try {
+    const response = await apiClient.get<AssessmentApiEnvelope<AssessmentDto>>(
+      apiEndpoints.assessment.byStudent(studentId),
+    );
+
+    return response.data?.data ?? null;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 function getStoredAdminScores(): AdminScoreRecord[] {
@@ -247,20 +274,34 @@ function buildAdminStudentRecord(
     : null;
 
   return {
+    studentId: null,
     assessmentId: student.assessmentId,
     matricNumber: student.matricNumber,
     fullName: student.fullName,
+    email: "",
     department: student.department,
+    documentSubmissionId: null,
+    documentValidationScore: null,
     reportScore,
     supervisorScore,
+    supervisorId: null,
+    supervisorFullName: null,
+    supervisorScoredAt: null,
     logbookScore: adminScore?.logbookScore ?? null,
     presentationScore: adminScore?.presentationScore ?? null,
+    adminId: null,
+    adminFullName: null,
+    adminScoredAt: null,
     totalScore,
     status: hasAllScores
       ? "complete"
       : reportScore !== null || supervisorScore !== null || adminScore !== null
         ? "ready"
         : "incomplete",
+    isFinalized: false,
+    grade: null,
+    finalizedAt: null,
+    createdAt: null,
   };
 }
 
@@ -274,34 +315,17 @@ export async function getAdminStudents(
   };
 
   if (hasConfiguredApiBaseUrl()) {
-    const [studentsResponse, assessmentsResponse] = await Promise.all([
-      apiClient.get<PaginatedUserProfileEnvelope>(apiEndpoints.userProfile.students, {
+    const studentsResponse = await apiClient.get<PaginatedUserProfileEnvelope>(
+      apiEndpoints.userProfile.students,
+      {
         params: normalizedParams,
-      }),
-      apiClient.get<PaginatedAssessmentResponse>(apiEndpoints.assessment.admin, {
-        params: {
-          pageNumber: 1,
-          pageSize: 1000,
-          searchTerm: normalizedParams.searchTerm,
-        },
-      }),
-    ]);
+      },
+    );
 
-    const studentsPage = parsePaginatedStudentsResponse(
+    return parsePaginatedStudentsResponse(
       studentsResponse.data,
       normalizedParams,
     );
-    const assessments = assessmentsResponse.data?.data?.items ?? [];
-    const assessmentByMatric = new Map(
-      assessments.map((assessment) => [assessment.matricNumber, assessment]),
-    );
-
-    return {
-      ...studentsPage,
-      items: studentsPage.items.map((student) =>
-        mergeStudentWithAssessment(student, assessmentByMatric.get(student.matricNumber)),
-      ),
-    };
   }
 
   await wait(500);
@@ -343,7 +367,15 @@ export async function getAdminStudentByMatric(matricNumber: string) {
     pageSize: 50,
     searchTerm: matricNumber,
   });
-  return students.items.find((student) => student.matricNumber === matricNumber) ?? null;
+  const student =
+    students.items.find((item) => item.matricNumber.toLowerCase() === matricNumber.toLowerCase()) ?? null;
+
+  if (!student || !hasConfiguredApiBaseUrl() || !student.studentId) {
+    return student;
+  }
+
+  const assessment = await getAssessmentByStudentId(student.studentId);
+  return mergeStudentWithAssessment(student, assessment);
 }
 
 export async function submitAdminScores(input: {
@@ -392,5 +424,42 @@ export async function submitAdminScores(input: {
   return {
     message: "Admin grading saved locally. Backend grading submission will replace this service later.",
     record: nextRecord,
+  };
+}
+
+export async function finalizeAssessment(assessmentId: string) {
+  if (hasConfiguredApiBaseUrl()) {
+    await apiClient.post<{ message?: string }>(apiEndpoints.assessment.finalize, {
+      assessmentId,
+    });
+
+    return {
+      message: "Assessment finalized successfully.",
+    };
+  }
+
+  await wait(500);
+
+  return {
+    message: "Assessment finalized locally.",
+  };
+}
+
+export async function unfinalizeAssessment(input: { assessmentId: string; reason: string }) {
+  if (hasConfiguredApiBaseUrl()) {
+    await apiClient.post<{ message?: string }>(apiEndpoints.assessment.unfinalize, {
+      assessmentId: input.assessmentId,
+      reason: input.reason,
+    });
+
+    return {
+      message: "Assessment unfinalized successfully.",
+    };
+  }
+
+  await wait(500);
+
+  return {
+    message: "Assessment unfinalized locally.",
   };
 }

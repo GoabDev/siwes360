@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { apiClient } from "@/lib/api/client";
+import { getApiErrorMessage } from "@/lib/api/error";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
 import type { StudentScoreBreakdown } from "@/features/student/types/student-scores";
@@ -46,6 +47,8 @@ type AssessmentDto = {
   presentationScore?: number | null;
   totalScore?: number;
   isComplete?: boolean;
+  isFinalized?: boolean;
+  grade?: string | null;
 };
 
 function getMockReportScore(uploadedAt: string) {
@@ -55,21 +58,24 @@ function getMockReportScore(uploadedAt: string) {
 
 export async function getStudentScores(): Promise<StudentScoreBreakdown> {
   if (hasConfiguredApiBaseUrl()) {
-    const profileResponse = await apiClient.get<UserProfileApiResponse>(apiEndpoints.userProfile.me);
-    const studentId = profileResponse.data?.data?.id?.trim();
-
-    if (!studentId) {
-      return {
-        report: null,
-        supervisor: null,
-        logbook: null,
-        presentation: null,
-        total: null,
-        status: "incomplete",
-      };
-    }
-
     try {
+      const profileResponse = await apiClient.get<UserProfileApiResponse>(apiEndpoints.userProfile.me);
+      const studentId = profileResponse.data?.data?.id?.trim();
+
+      if (!studentId) {
+        return {
+          validation: null,
+          report: null,
+          supervisor: null,
+          logbook: null,
+          presentation: null,
+          total: null,
+          grade: null,
+          isFinalized: false,
+          status: "incomplete",
+        };
+      }
+
       const assessmentResponse = await apiClient.get<AssessmentApiEnvelope<AssessmentDto>>(
         apiEndpoints.assessment.byStudent(studentId),
       );
@@ -78,36 +84,45 @@ export async function getStudentScores(): Promise<StudentScoreBreakdown> {
 
       if (!assessment) {
         return {
+          validation: null,
           report: null,
           supervisor: null,
           logbook: null,
           presentation: null,
           total: null,
+          grade: null,
+          isFinalized: false,
           status: "incomplete",
         };
       }
 
       return {
+        validation: assessment.documentValidationScore ?? null,
         report: assessment.reportScore ?? null,
         supervisor: assessment.supervisorScore ?? null,
         logbook: assessment.logbookScore ?? null,
         presentation: assessment.presentationScore ?? null,
         total: assessment.isComplete ? (assessment.totalScore ?? null) : null,
+        grade: assessment.grade ?? null,
+        isFinalized: assessment.isFinalized === true,
         status: assessment.isComplete ? "complete" : "incomplete",
       };
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         return {
+          validation: null,
           report: null,
           supervisor: null,
           logbook: null,
           presentation: null,
           total: null,
+          grade: null,
+          isFinalized: false,
           status: "incomplete",
         };
       }
 
-      throw error;
+      throw new Error(getApiErrorMessage(error, "Unable to load your assessment scores."));
     }
   }
 
@@ -115,11 +130,14 @@ export async function getStudentScores(): Promise<StudentScoreBreakdown> {
 
   if (typeof window === "undefined") {
     return {
+      validation: null,
       report: null,
       supervisor: null,
       logbook: null,
       presentation: null,
       total: null,
+      grade: null,
+      isFinalized: false,
       status: "incomplete",
     };
   }
@@ -143,11 +161,14 @@ export async function getStudentScores(): Promise<StudentScoreBreakdown> {
   const isComplete = totalParts.every((item) => item !== null);
 
   return {
+    validation: reportScore,
     report: reportScore,
     supervisor,
     logbook: admin?.logbookScore ?? null,
     presentation: admin?.presentationScore ?? null,
     total: isComplete ? totalParts.reduce((sum, item) => sum + (item ?? 0), 0) : null,
+    grade: null,
+    isFinalized: false,
     status: isComplete ? "complete" : "incomplete",
   };
 }

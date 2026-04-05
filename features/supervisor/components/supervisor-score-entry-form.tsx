@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -35,7 +36,6 @@ type SupervisorScoreEntryFormProps = {
 export function SupervisorScoreEntryForm({
   matricNumber,
 }: SupervisorScoreEntryFormProps) {
-  const router = useRouter();
   const studentQuery = useSupervisorStudentQuery(matricNumber);
   const submitMutation = useSubmitSupervisorScoreMutation();
 
@@ -46,6 +46,18 @@ export function SupervisorScoreEntryForm({
       note: "",
     },
   });
+  const student = studentQuery.data;
+
+  useEffect(() => {
+    if (!student) {
+      return;
+    }
+
+    form.reset({
+      score: student.supervisorScore ?? 0,
+      note: "",
+    });
+  }, [form, student]);
 
   if (studentQuery.isLoading) {
     return (
@@ -63,7 +75,6 @@ export function SupervisorScoreEntryForm({
     );
   }
 
-  const student = studentQuery.data;
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       await toast.promise(
@@ -79,11 +90,46 @@ export function SupervisorScoreEntryForm({
           error: (error) => getApiErrorMessage(error, "Unable to submit supervision score."),
         },
       );
-      router.push("/supervisor/submissions");
     } catch {
       return;
     }
   });
+
+  if (student.isFinalized) {
+    return (
+      <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+        <SurfaceCard className="space-y-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Student summary</p>
+            <h3 className="mt-1 text-xl font-semibold">{student.fullName}</h3>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge label="Finalized" variant="success" />
+            {student.supervisorScore !== null ? (
+              <StatusBadge label="Supervisor score recorded" variant="neutral" />
+            ) : null}
+          </div>
+          <div className="grid gap-3 text-sm text-muted">
+            <p>Matric number: <span className="text-foreground">{student.matricNumber}</span></p>
+            <p>Department: <span className="text-foreground">{student.department}</span></p>
+            <p>Report score: <span className="text-foreground">{student.reportScore ?? "Pending"} / 30</span></p>
+            <p>Supervisor score: <span className="text-foreground">{student.supervisorScore ?? "Pending"} / 10</span></p>
+            <p>Total: <span className="text-foreground">{student.isComplete ? `${student.totalScore} / 100` : "Incomplete"}</span></p>
+            <p>Grade: <span className="text-foreground">{student.grade ?? "Pending"}</span></p>
+          </div>
+        </SurfaceCard>
+
+        <SurfaceCard className="space-y-3">
+          <p className="text-sm text-muted">
+            This assessment has already been finalized on the backend.
+          </p>
+          <p className="text-sm text-muted">
+            Supervisor scores are locked once finalization has happened.
+          </p>
+        </SurfaceCard>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
@@ -92,11 +138,20 @@ export function SupervisorScoreEntryForm({
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Student summary</p>
           <h3 className="mt-1 text-xl font-semibold">{student.fullName}</h3>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge
+            label={student.status === "scored" ? "Scored" : "Pending"}
+            variant={student.status === "scored" ? "warning" : "pending"}
+          />
+          <StatusBadge label="Editable" variant="neutral" />
+        </div>
         <div className="grid gap-3 text-sm text-muted">
           <p>Matric number: <span className="text-foreground">{student.matricNumber}</span></p>
           <p>Department: <span className="text-foreground">{student.department}</span></p>
-          <p>Placement company: <span className="text-foreground">{student.placementCompany}</span></p>
-          <p>Placement address: <span className="text-foreground">{student.placementAddress}</span></p>
+          <p>Email: <span className="text-foreground">{student.email}</span></p>
+          <p>Validation score: <span className="text-foreground">{student.documentValidationScore ?? "Pending"}{student.documentValidationScore !== null ? " / 100" : ""}</span></p>
+          <p>Report score: <span className="text-foreground">{student.reportScore ?? "Pending"} / 30</span></p>
+          <p>Total: <span className="text-foreground">{student.isComplete ? `${student.totalScore} / 100` : "Incomplete"}</span></p>
         </div>
       </SurfaceCard>
 

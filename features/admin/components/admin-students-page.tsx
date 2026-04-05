@@ -6,8 +6,8 @@ export function AdminStudentsPageView() {
     <section className="space-y-6">
       <DashboardHero
         eyebrow="Department students"
-        title="Track grading coverage across your department"
-        description="This table consolidates report, supervisor, and admin grading progress so incomplete records are visible immediately."
+        title="Review students in your department"
+        description="Open any student record to inspect their profile, then fetch grading status and score details on a dedicated page."
       />
       <AdminStudentsTable />
     </section>

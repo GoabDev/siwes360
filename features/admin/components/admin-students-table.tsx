@@ -11,13 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { useAdminStudentsQuery } from "@/features/admin/queries/admin-student-queries";
-
-function scoreValue(value: number | null, max: number) {
-  return value === null ? `Pending / ${max}` : `${value} / ${max}`;
-}
 
 export function AdminStudentsTable() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,7 +28,7 @@ export function AdminStudentsTable() {
   if (studentsQuery.isLoading) {
     return (
       <SurfaceCard>
-        <p className="text-sm text-muted">Loading department students...</p>
+        <p className="text-sm text-muted">Loading students...</p>
       </SurfaceCard>
     );
   }
@@ -48,7 +43,7 @@ export function AdminStudentsTable() {
               setSearchTerm(event.target.value);
               setPageNumber(1);
             }}
-            placeholder="Search by name, matric number, or department"
+            placeholder="Search by name, matric number, email, or department"
             className="max-w-xl"
           />
           <div className="flex items-center gap-2 text-sm text-muted">
@@ -87,7 +82,7 @@ export function AdminStudentsTable() {
             setSearchTerm(event.target.value);
             setPageNumber(1);
           }}
-          placeholder="Search by name, matric number, or department"
+          placeholder="Search by name, matric number, email, or department"
           className="max-w-xl"
         />
         <div className="flex items-center gap-3 text-sm text-muted">
@@ -117,54 +112,33 @@ export function AdminStudentsTable() {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-[1.2fr_0.85fr_0.8fr_0.65fr_0.7fr_0.7fr_0.75fr_0.7fr_0.8fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
-        <span>Name</span>
+      <div className="grid grid-cols-[1.15fr_0.9fr_1.1fr_0.9fr_0.8fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
+        <span>Student</span>
         <span>Matric</span>
-        <span>Status</span>
-        <span>Report</span>
-        <span>Supervisor</span>
-        <span>Logbook</span>
-        <span>Presentation</span>
-        <span>Total</span>
+        <span>Email</span>
+        <span>Department</span>
         <span>Action</span>
       </div>
       <div className="divide-y divide-border/60">
         {studentsQuery.data.items.map((student) => (
           <div
             key={student.matricNumber}
-            className="grid grid-cols-[1.2fr_0.85fr_0.8fr_0.65fr_0.7fr_0.7fr_0.75fr_0.7fr_0.8fr] gap-4 px-5 py-4 text-sm"
+            className="grid grid-cols-[1.15fr_0.9fr_1.1fr_0.9fr_0.8fr] gap-4 px-5 py-4 text-sm"
           >
             <div>
               <p className="font-medium">{student.fullName}</p>
-              <p className="mt-1 text-xs text-muted">{student.department}</p>
+              <p className="mt-1 text-xs text-muted">
+                {student.studentId ?? "Student record"}
+              </p>
             </div>
-            <span className="text-muted">{student.matricNumber}</span>
-            <div className="flex items-start">
-              <StatusBadge
-                label={student.status}
-                variant={
-                  student.status === "complete"
-                    ? "success"
-                    : student.status === "ready"
-                      ? "warning"
-                      : "pending"
-                }
-              />
-            </div>
-            <span>{scoreValue(student.reportScore, 30)}</span>
-            <span>{scoreValue(student.supervisorScore, 10)}</span>
-            <span>{scoreValue(student.logbookScore, 30)}</span>
-            <span>{scoreValue(student.presentationScore, 30)}</span>
-            <span>{student.totalScore === null ? "Incomplete" : `${student.totalScore} / 100`}</span>
-            {student.assessmentId ? (
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/admin/score-entry/${encodeURIComponent(student.matricNumber)}`}>
-                  {student.logbookScore !== null || student.presentationScore !== null ? "Edit" : "Grade"}
-                </Link>
-              </Button>
-            ) : (
-              <span className="text-xs text-muted">Await report</span>
-            )}
+            <span className="text-muted">{student.matricNumber || "N/A"}</span>
+            <span className="truncate text-muted">{student.email || "N/A"}</span>
+            <span>{student.department}</span>
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/admin/students/${encodeURIComponent(student.matricNumber)}`}>
+                View student
+              </Link>
+            </Button>
           </div>
         ))}
       </div>

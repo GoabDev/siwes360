@@ -3,12 +3,14 @@
 import { DashboardHero } from "@/components/ui/dashboard-hero";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { useStudentScoresQuery } from "@/features/student/queries/student-scores-queries";
+import { getApiErrorMessage } from "@/lib/api/error";
 
 export function StudentScoresBreakdown() {
   const scoresQuery = useStudentScoresQuery();
   const scores = scoresQuery.data;
 
   const items = [
+    { label: "Validation", value: scores?.validation, max: 100 },
     { label: "Report", value: scores?.report, max: 30 },
     { label: "Supervisor", value: scores?.supervisor, max: 10 },
     { label: "Logbook", value: scores?.logbook, max: 30 },
@@ -20,16 +22,30 @@ export function StudentScoresBreakdown() {
       <DashboardHero
         eyebrow="Score breakdown"
         title="Monitor every grading component as it becomes available"
-        description="This view aggregates the same mock records used by upload, supervisor scoring, and admin grading so progress is visible in one place."
+        description="This view reflects the live assessment record returned for your student account, including validation, scoring, and finalization state."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
         <SurfaceCard className="grid gap-3 md:grid-cols-2">
+          {scoresQuery.isLoading ? (
+            <div className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4 text-sm text-muted md:col-span-2">
+              Loading your current assessment breakdown...
+            </div>
+          ) : null}
+          {scoresQuery.error ? (
+            <div className="rounded-[1.25rem] border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 md:col-span-2">
+              {getApiErrorMessage(scoresQuery.error, "Unable to load your score breakdown.")}
+            </div>
+          ) : null}
           {items.map((item) => (
             <div key={item.label} className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">{item.label}</p>
               <p className="mt-2 text-2xl font-semibold">
-                {item.value == null ? `Pending / ${item.max}` : `${item.value} / ${item.max}`}
+                {scoresQuery.isLoading
+                  ? `Loading / ${item.max}`
+                  : item.value == null
+                    ? `Pending / ${item.max}`
+                    : `${item.value} / ${item.max}`}
               </p>
             </div>
           ))}
@@ -39,8 +55,28 @@ export function StudentScoresBreakdown() {
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Final state</p>
             <h3 className="mt-1 text-xl font-semibold">
-              {scores?.total == null ? "Incomplete result" : `${scores.total} / 100`}
+              {scoresQuery.isLoading
+                ? "Loading result"
+                : scores?.total == null
+                  ? "Incomplete result"
+                  : `${scores.total} / 100`}
             </h3>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Grade</p>
+              <p className="mt-2 text-lg font-semibold">
+                {scoresQuery.isLoading
+                  ? "Loading"
+                  : scores?.grade ?? (scores?.isFinalized ? "Pending" : "Not finalized")}
+              </p>
+            </div>
+            <div className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Assessment state</p>
+              <p className="mt-2 text-lg font-semibold">
+                {scoresQuery.isLoading ? "Loading" : scores?.isFinalized ? "Finalized" : "Open"}
+              </p>
+            </div>
           </div>
           <p className="text-sm leading-6 text-muted">
             {scores?.status === "complete"

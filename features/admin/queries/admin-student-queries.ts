@@ -2,8 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  finalizeAssessment,
   getAdminStudentByMatric,
   getAdminStudents,
+  unfinalizeAssessment,
   submitAdminScores,
 } from "@/features/admin/services/admin-student-service";
 import type { AdminStudentsQueryParams } from "@/features/admin/types/admin-students";
@@ -34,6 +36,34 @@ export function useSubmitAdminScoresMutation() {
     onSuccess: async (_data, variables) => {
       await queryClient.invalidateQueries({ queryKey: ["admin-students"] });
       await queryClient.invalidateQueries({ queryKey: adminStudentKey(variables.matricNumber) });
+    },
+  });
+}
+
+export function useFinalizeAssessmentMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: finalizeAssessment,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin-students"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-student"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-assessments"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-finalize-preview"] });
+    },
+  });
+}
+
+export function useUnfinalizeAssessmentMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: unfinalizeAssessment,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin-students"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-student"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-assessments"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-finalize-preview"] });
     },
   });
 }

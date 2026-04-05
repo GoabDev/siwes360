@@ -38,6 +38,12 @@ export const apiEndpoints = {
     admin: "/api/Assessment/admin",
     supervisorScore: "/api/Assessment/supervisor-score",
     adminScores: "/api/Assessment/admin-scores",
+    finalize: "/api/Assessment/finalize",
+    unfinalize: "/api/Assessment/unfinalize",
+    finalizeAll: "/api/Assessment/finalize-all",
+    finalizePreview: "/api/Assessment/finalize-preview",
+    auditLog: (assessmentId: string) => `/api/Assessment/${assessmentId}/audit-log`,
+    exportPdf: "/api/Assessment/admin/export-pdf",
   },
   student: {
     profile: "/students/profile",
