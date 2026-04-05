@@ -55,8 +55,12 @@ export function AdminSupervisorsTable() {
 
   if (supervisorsQuery.isLoading) {
     return (
-      <SurfaceCard>
-        <p className="text-sm text-muted">Loading supervisors...</p>
+      <SurfaceCard className="space-y-3">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Supervisors</p>
+        <h3 className="text-xl font-semibold">Loading supervisors</h3>
+        <p className="text-sm leading-6 text-muted">
+          Please wait while we gather the current supervisor list.
+        </p>
       </SurfaceCard>
     );
   }
@@ -98,7 +102,9 @@ export function AdminSupervisorsTable() {
             </Select>
           </div>
         </div>
-        <p className="text-sm text-muted">No supervisors are currently available for this view.</p>
+        <div className="rounded-[1.2rem] border border-dashed border-border bg-background/60 p-4 text-sm text-muted">
+          No supervisors are currently available for this view.
+        </div>
       </SurfaceCard>
     );
   }
@@ -143,7 +149,7 @@ export function AdminSupervisorsTable() {
         </div>
       </div>
 
-      <div className="grid grid-cols-[1.1fr_1.2fr_1fr_0.9fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
+      <div className="hidden grid-cols-[1.1fr_1.2fr_1fr_0.9fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted lg:grid">
         <span>Name</span>
         <span>Email</span>
         <span>Department</span>
@@ -153,29 +159,63 @@ export function AdminSupervisorsTable() {
         {data.items.map((supervisor) => (
           <div
             key={supervisor.id}
-            className="grid grid-cols-[1.1fr_1.2fr_1fr_0.9fr] gap-4 px-5 py-4 text-sm"
+            className="px-5 py-4 text-sm"
           >
-            <div>
-              <p className="font-medium">{supervisor.fullName}</p>
-              <p className="mt-1 text-xs text-muted">{supervisor.id}</p>
+            <div className="space-y-3 rounded-[1.2rem] border border-border/70 bg-background/60 p-4 lg:hidden">
+              <div>
+                <p className="font-medium">{supervisor.fullName}</p>
+                <p className="mt-1 text-xs text-muted">{supervisor.id}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Email</p>
+                  <p className="mt-1 break-words text-muted">{supervisor.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Department</p>
+                  <p className="mt-1">{supervisor.department}</p>
+                </div>
+              </div>
+              <div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setPendingRemoval({
+                      id: supervisor.id,
+                      fullName: supervisor.fullName,
+                    })
+                  }
+                  disabled={deleteMutation.isPending}
+                >
+                  Remove
+                </Button>
+              </div>
             </div>
-            <span className="text-muted">{supervisor.email}</span>
-            <span>{supervisor.department}</span>
-            <div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  setPendingRemoval({
-                    id: supervisor.id,
-                    fullName: supervisor.fullName,
-                  })
-                }
-                disabled={deleteMutation.isPending}
-              >
-                Remove
-              </Button>
+            <div className="hidden lg:grid lg:grid-cols-[1.1fr_1.2fr_1fr_0.9fr] lg:gap-4">
+              <div>
+                <p className="font-medium">{supervisor.fullName}</p>
+                <p className="mt-1 text-xs text-muted">{supervisor.id}</p>
+              </div>
+              <span className="text-muted">{supervisor.email}</span>
+              <span>{supervisor.department}</span>
+              <div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setPendingRemoval({
+                      id: supervisor.id,
+                      fullName: supervisor.fullName,
+                    })
+                  }
+                  disabled={deleteMutation.isPending}
+                >
+                  Remove
+                </Button>
+              </div>
             </div>
           </div>
         ))}

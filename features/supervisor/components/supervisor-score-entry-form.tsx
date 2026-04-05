@@ -115,13 +115,20 @@ export function SupervisorScoreEntryForm({
               <StatusBadge label="Supervisor score recorded" variant="neutral" />
             ) : null}
           </div>
-          <div className="grid gap-3 text-sm text-muted">
-            <p>Matric number: <span className="text-foreground">{student.matricNumber}</span></p>
-            <p>Department: <span className="text-foreground">{student.department}</span></p>
-            <p>Report score: <span className="text-foreground">{student.reportScore ?? "Pending"} / 30</span></p>
-            <p>Supervisor score: <span className="text-foreground">{student.supervisorScore ?? "Pending"} / 10</span></p>
-            <p>Total: <span className="text-foreground">{student.isComplete ? `${student.totalScore} / 100` : "Incomplete"}</span></p>
-            <p>Grade: <span className="text-foreground">{student.grade ?? "Pending"}</span></p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              ["Matric number", student.matricNumber],
+              ["Department", student.department],
+              ["Report score", `${student.reportScore ?? "Pending"} / 30`],
+              ["Supervisor score", `${student.supervisorScore ?? "Pending"} / 10`],
+              ["Total", student.isComplete ? `${student.totalScore} / 100` : "Incomplete"],
+              ["Grade", student.grade ?? "Pending"],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-[1.2rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">{label}</p>
+                <p className="mt-2 text-foreground">{value}</p>
+              </div>
+            ))}
           </div>
         </SurfaceCard>
 
@@ -151,13 +158,20 @@ export function SupervisorScoreEntryForm({
           />
           <StatusBadge label="Editable" variant="neutral" />
         </div>
-        <div className="grid gap-3 text-sm text-muted">
-          <p>Matric number: <span className="text-foreground">{student.matricNumber}</span></p>
-          <p>Department: <span className="text-foreground">{student.department}</span></p>
-          <p>Email: <span className="text-foreground">{student.email}</span></p>
-          <p>Validation score: <span className="text-foreground">{student.documentValidationScore ?? "Pending"}{student.documentValidationScore !== null ? " / 100" : ""}</span></p>
-          <p>Report score: <span className="text-foreground">{student.reportScore ?? "Pending"} / 30</span></p>
-          <p>Total: <span className="text-foreground">{student.isComplete ? `${student.totalScore} / 100` : "Incomplete"}</span></p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            ["Matric number", student.matricNumber],
+            ["Department", student.department],
+            ["Email", student.email],
+            ["Validation score", `${student.documentValidationScore ?? "Pending"}${student.documentValidationScore !== null ? " / 100" : ""}`],
+            ["Report score", `${student.reportScore ?? "Pending"} / 30`],
+            ["Total", student.isComplete ? `${student.totalScore} / 100` : "Incomplete"],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-[1.2rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">{label}</p>
+              <p className="mt-2 break-words text-foreground">{value}</p>
+            </div>
+          ))}
         </div>
       </SurfaceCard>
 
@@ -212,7 +226,7 @@ export function SupervisorScoreEntryForm({
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={submitMutation.isPending}>
+            <Button type="submit" disabled={submitMutation.isPending} className="w-full sm:w-auto">
               {submitMutation.isPending ? "Submitting score..." : "Submit score"}
             </Button>
           </form>

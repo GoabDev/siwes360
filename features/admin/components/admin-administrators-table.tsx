@@ -25,8 +25,12 @@ export function AdminAdministratorsTable() {
 
   if (administratorsQuery.isLoading) {
     return (
-      <SurfaceCard>
-        <p className="text-sm text-muted">Loading administrators...</p>
+      <SurfaceCard className="space-y-3">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Administrators</p>
+        <h3 className="text-xl font-semibold">Loading department administrators</h3>
+        <p className="text-sm leading-6 text-muted">
+          Please wait while we gather the current administrator list.
+        </p>
       </SurfaceCard>
     );
   }
@@ -68,7 +72,9 @@ export function AdminAdministratorsTable() {
             </Select>
           </div>
         </div>
-        <p className="text-sm text-muted">No administrators are currently available for this view.</p>
+        <div className="rounded-[1.2rem] border border-dashed border-border bg-background/60 p-4 text-sm text-muted">
+          No administrators are currently available for this view.
+        </div>
       </SurfaceCard>
     );
   }
@@ -113,7 +119,7 @@ export function AdminAdministratorsTable() {
         </div>
       </div>
 
-      <div className="grid grid-cols-[1.1fr_1.3fr_1fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
+      <div className="hidden grid-cols-[1.1fr_1.3fr_1fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted lg:grid">
         <span>Administrator</span>
         <span>Email</span>
         <span>Department</span>
@@ -122,14 +128,32 @@ export function AdminAdministratorsTable() {
         {data.items.map((administrator) => (
           <div
             key={administrator.id}
-            className="grid grid-cols-[1.1fr_1.3fr_1fr] gap-4 px-5 py-4 text-sm"
+            className="px-5 py-4 text-sm"
           >
-            <div>
-              <p className="font-medium">{administrator.fullName}</p>
-              <p className="mt-1 text-xs text-muted">{administrator.id}</p>
+            <div className="space-y-3 rounded-[1.2rem] border border-border/70 bg-background/60 p-4 lg:hidden">
+              <div>
+                <p className="font-medium">{administrator.fullName}</p>
+                <p className="mt-1 text-xs text-muted">{administrator.id}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Email</p>
+                  <p className="mt-1 break-words text-muted">{administrator.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Department</p>
+                  <p className="mt-1">{administrator.department}</p>
+                </div>
+              </div>
             </div>
-            <span className="text-muted">{administrator.email}</span>
-            <span>{administrator.department}</span>
+            <div className="hidden lg:grid lg:grid-cols-[1.1fr_1.3fr_1fr] lg:gap-4">
+              <div>
+                <p className="font-medium">{administrator.fullName}</p>
+                <p className="mt-1 text-xs text-muted">{administrator.id}</p>
+              </div>
+              <span className="text-muted">{administrator.email}</span>
+              <span>{administrator.department}</span>
+            </div>
           </div>
         ))}
       </div>

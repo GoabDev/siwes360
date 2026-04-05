@@ -147,6 +147,9 @@ export function AdminStudentDetailPageView({
             <h3 className="mt-1 text-xl font-semibold">
               {student.assessmentId ? "Assessment available" : "Assessment not available yet"}
             </h3>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Check the current result, finalization state, and the scoring trail from one place.
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge
@@ -187,22 +190,38 @@ export function AdminStudentDetailPageView({
               </div>
             ))}
           </div>
-          <div className="grid gap-3 rounded-[1.2rem] border border-border/70 bg-background/60 p-4 text-sm text-muted md:grid-cols-2">
-            <p>
-              Supervisor: <span className="text-foreground">{student.supervisorFullName ?? "Pending"}</span>
-            </p>
-            <p>
-              Supervisor scored at: <span className="text-foreground">{student.supervisorScoredAt ? new Date(student.supervisorScoredAt).toLocaleString() : "Pending"}</span>
-            </p>
-            <p>
-              Administrator: <span className="text-foreground">{student.adminFullName ?? "Pending"}</span>
-            </p>
-            <p>
-              Admin scored at: <span className="text-foreground">{student.adminScoredAt ? new Date(student.adminScoredAt).toLocaleString() : "Pending"}</span>
-            </p>
+          <div className="space-y-3 rounded-[1.2rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Scoring activity</p>
+              <p className="mt-2 leading-6 text-muted">
+                See who has already scored this assessment and when the scores were submitted.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Supervisor</p>
+                <p className="mt-1 text-foreground">{student.supervisorFullName ?? "Pending"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Supervisor scored at</p>
+                <p className="mt-1 text-foreground">
+                  {student.supervisorScoredAt ? new Date(student.supervisorScoredAt).toLocaleString() : "Pending"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Administrator</p>
+                <p className="mt-1 text-foreground">{student.adminFullName ?? "Pending"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Admin scored at</p>
+                <p className="mt-1 text-foreground">
+                  {student.adminScoredAt ? new Date(student.adminScoredAt).toLocaleString() : "Pending"}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild variant="outline">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link href="/admin/students">Back to students</Link>
             </Button>
             {canFinalize ? (
@@ -210,6 +229,7 @@ export function AdminStudentDetailPageView({
                 type="button"
                 onClick={handleFinalize}
                 disabled={finalizeMutation.isPending}
+                className="w-full sm:w-auto"
               >
                 {finalizeMutation.isPending ? "Finalizing..." : "Finalize assessment"}
               </Button>
@@ -223,21 +243,22 @@ export function AdminStudentDetailPageView({
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Unfinalize</p>
             <h3 className="mt-1 text-xl font-semibold">Reopen this assessment</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Use this only when the assessment needs a correction or another review pass.
+            </p>
           </div>
-          <p className="text-sm text-muted">
-            Please tell us why this assessment should be reopened.
-          </p>
           <Textarea
             value={unfinalizeReason}
             onChange={(event) => setUnfinalizeReason(event.target.value)}
             placeholder="Explain why you want to reopen this assessment."
           />
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Button
               type="button"
               variant="outline"
               onClick={handleUnfinalize}
               disabled={unfinalizeMutation.isPending || !unfinalizeReason.trim()}
+              className="w-full sm:w-auto"
             >
               {unfinalizeMutation.isPending ? "Reopening..." : "Unfinalize assessment"}
             </Button>
@@ -273,7 +294,7 @@ export function AdminStudentDetailPageView({
                 key={entry.id}
                 className="rounded-[1.2rem] border border-border/70 bg-background/60 p-4"
               >
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="font-medium">{entry.action}</p>
                     <p className="text-xs text-muted">

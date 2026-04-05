@@ -171,7 +171,7 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
       message:
         getFallbackMessage(message, "Registration successful. Check your email to verify your account.") ??
         "Registration successful. Check your email to verify your account.",
-      redirectTo: `/verify-email?email=${encodeURIComponent(payload.email.trim())}`,
+      redirectTo: "/auth/login",
     };
   }
 
@@ -180,20 +180,20 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
   if (payload.role === "student") {
     return {
       message: `Student registration captured for ${payload.matricNo}. Backend student onboarding will plug into this service next.`,
-      redirectTo: `/verify-email?email=${encodeURIComponent(payload.email.trim())}`,
+      redirectTo: "/auth/login",
     };
   }
 
   if (payload.role === "admin") {
     return {
       message: "Admin registration captured locally. Live backend registration will replace this fallback.",
-      redirectTo: `/verify-email?email=${encodeURIComponent(payload.email.trim())}`,
+      redirectTo: "/auth/login",
     };
   }
 
   return {
     message: "Supervisor registration captured locally. Live backend registration will replace this fallback.",
-    redirectTo: `/verify-email?email=${encodeURIComponent(payload.email.trim())}`,
+    redirectTo: "/auth/login",
   };
 }
 

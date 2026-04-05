@@ -40,8 +40,12 @@ export function AdminDepartmentsTable({ onEdit }: AdminDepartmentsTableProps) {
 
   if (departmentsQuery.isLoading) {
     return (
-      <SurfaceCard>
-        <p className="text-sm text-muted">Loading departments...</p>
+      <SurfaceCard className="space-y-3">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Departments</p>
+        <h3 className="text-xl font-semibold">Loading departments</h3>
+        <p className="text-sm leading-6 text-muted">
+          Please wait while we gather your current department list.
+        </p>
       </SurfaceCard>
     );
   }
@@ -51,14 +55,16 @@ export function AdminDepartmentsTable({ onEdit }: AdminDepartmentsTableProps) {
   if (!departments.length) {
     return (
       <SurfaceCard>
-        <p className="text-sm text-muted">No departments have been created yet.</p>
+        <div className="rounded-[1.2rem] border border-dashed border-border bg-background/60 p-4 text-sm text-muted">
+          No departments have been created yet.
+        </div>
       </SurfaceCard>
     );
   }
 
   return (
     <SurfaceCard className="space-y-0 overflow-hidden p-0">
-      <div className="grid grid-cols-[1.1fr_1.2fr_0.9fr_0.9fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
+      <div className="hidden grid-cols-[1.1fr_1.2fr_0.9fr_0.9fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted lg:grid">
         <span>Department</span>
         <span>Administrator</span>
         <span>Created</span>
@@ -68,27 +74,59 @@ export function AdminDepartmentsTable({ onEdit }: AdminDepartmentsTableProps) {
         {departments.map((department) => (
           <div
             key={department.id}
-            className="grid grid-cols-[1.1fr_1.2fr_0.9fr_0.9fr] gap-4 px-5 py-4 text-sm"
+            className="px-5 py-4 text-sm"
           >
-            <div>
-              <p className="font-medium">{department.name}</p>
-              <p className="mt-1 text-xs text-muted">{department.id}</p>
+            <div className="space-y-3 rounded-[1.2rem] border border-border/70 bg-background/60 p-4 lg:hidden">
+              <div>
+                <p className="font-medium">{department.name}</p>
+                <p className="mt-1 text-xs text-muted">{department.id}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Administrator</p>
+                  <p className="mt-1 text-muted">{department.adminEmail ?? "No admin assigned"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Created</p>
+                  <p className="mt-1">{department.createdAt ? new Date(department.createdAt).toLocaleDateString() : "N/A"}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={() => onEdit(department)}>
+                  Edit
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPendingDelete(department)}
+                  disabled={deleteMutation.isPending}
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
-            <span className="text-muted">{department.adminEmail ?? "No admin assigned"}</span>
-            <span>{department.createdAt ? new Date(department.createdAt).toLocaleDateString() : "N/A"}</span>
-            <div className="flex items-center gap-2">
-              <Button type="button" size="sm" variant="outline" onClick={() => onEdit(department)}>
-                Edit
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => setPendingDelete(department)}
-                disabled={deleteMutation.isPending}
-              >
-                Delete
-              </Button>
+            <div className="hidden lg:grid lg:grid-cols-[1.1fr_1.2fr_0.9fr_0.9fr] lg:gap-4">
+              <div>
+                <p className="font-medium">{department.name}</p>
+                <p className="mt-1 text-xs text-muted">{department.id}</p>
+              </div>
+              <span className="text-muted">{department.adminEmail ?? "No admin assigned"}</span>
+              <span>{department.createdAt ? new Date(department.createdAt).toLocaleDateString() : "N/A"}</span>
+              <div className="flex items-center gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={() => onEdit(department)}>
+                  Edit
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPendingDelete(department)}
+                  disabled={deleteMutation.isPending}
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
           </div>
         ))}

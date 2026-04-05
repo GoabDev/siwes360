@@ -245,13 +245,14 @@ export function AdminReportsOverview() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-[1.2fr_0.75fr_0.8fr_0.8fr_0.8fr_0.7fr_0.8fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
+            <div className="hidden grid-cols-[1.2fr_0.72fr_0.78fr_0.78fr_0.8fr_0.7fr_0.55fr_0.82fr] gap-4 border-b border-border/70 bg-background/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.16em] text-muted lg:grid">
               <span>Student</span>
               <span>Validation</span>
               <span>Report</span>
               <span>Supervisor</span>
               <span>Admin</span>
               <span>Total</span>
+              <span>Grade</span>
               <span>Status</span>
             </div>
             <div className="divide-y divide-border/60">
@@ -259,32 +260,79 @@ export function AdminReportsOverview() {
                 <Link
                   key={assessment.assessmentId}
                   href={`/admin/students/${encodeURIComponent(assessment.matricNumber)}`}
-                  className="grid grid-cols-[1.2fr_0.75fr_0.8fr_0.8fr_0.8fr_0.7fr_0.8fr] gap-4 px-5 py-4 text-sm transition hover:bg-background/50"
+                  className="block px-5 py-4 text-sm transition hover:bg-background/50"
                 >
-                  <div>
-                    <p className="font-medium">{assessment.fullName}</p>
-                    <p className="text-xs text-muted">{assessment.matricNumber}</p>
+                  <div className="overflow-hidden rounded-[1.45rem] border border-border/70 bg-[linear-gradient(180deg,_rgba(255,253,247,0.96),_rgba(255,253,247,0.82))] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] lg:hidden">
+                    <div className="flex items-start justify-between gap-3 border-b border-border/60 px-4 py-4">
+                      <div className="min-w-0">
+                        <p className="text-lg font-semibold leading-6">{assessment.fullName}</p>
+                        <p className="mt-1 text-sm text-muted">{assessment.matricNumber}</p>
+                      </div>
+                      <StatusBadge
+                        label={assessment.isFinalized ? "Finalized" : assessment.isComplete ? "Ready" : "Open"}
+                        variant={
+                          assessment.isFinalized
+                            ? "success"
+                            : assessment.isComplete
+                              ? "warning"
+                              : "pending"
+                        }
+                        className="shrink-0"
+                      />
+                    </div>
+                    <div className="grid gap-3 px-4 py-4 sm:grid-cols-2">
+                      {[
+                        ["Validation", formatScore(assessment.documentValidationScore, 100)],
+                        ["Report", formatScore(assessment.reportScore, 30)],
+                        ["Supervisor", formatScore(assessment.supervisorScore, 10)],
+                        [
+                          "Admin",
+                          assessment.logbookScore == null || assessment.presentationScore == null
+                            ? "Pending"
+                            : `${assessment.logbookScore + assessment.presentationScore} / 60`,
+                        ],
+                        ["Total", assessment.isComplete ? `${assessment.totalScore} / 100` : "Incomplete"],
+                        ["Grade", assessment.grade ?? "Pending"],
+                      ].map(([label, value]) => (
+                        <div
+                          key={label}
+                          className="rounded-[1.1rem] border border-border/60 bg-background/70 px-3 py-3"
+                        >
+                          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted">
+                            {label}
+                          </p>
+                          <p className="mt-2 text-base font-semibold text-foreground">{value}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <span>{formatScore(assessment.documentValidationScore, 100)}</span>
-                  <span>{formatScore(assessment.reportScore, 30)}</span>
-                  <span>{formatScore(assessment.supervisorScore, 10)}</span>
-                  <span>
-                    {assessment.logbookScore == null || assessment.presentationScore == null
-                      ? "Pending"
-                      : `${assessment.logbookScore + assessment.presentationScore} / 60`}
-                  </span>
-                  <span>{assessment.isComplete ? `${assessment.totalScore} / 100` : "Incomplete"}</span>
-                  <div className="flex items-start">
-                    <StatusBadge
-                      label={assessment.isFinalized ? "Finalized" : assessment.isComplete ? "Ready" : "Open"}
-                      variant={
-                        assessment.isFinalized
-                          ? "success"
-                          : assessment.isComplete
-                            ? "warning"
-                            : "pending"
-                      }
-                    />
+                  <div className="hidden lg:grid lg:grid-cols-[1.2fr_0.72fr_0.78fr_0.78fr_0.8fr_0.7fr_0.55fr_0.82fr] lg:gap-4">
+                    <div>
+                      <p className="font-medium">{assessment.fullName}</p>
+                      <p className="text-xs text-muted">{assessment.matricNumber}</p>
+                    </div>
+                    <span>{formatScore(assessment.documentValidationScore, 100)}</span>
+                    <span>{formatScore(assessment.reportScore, 30)}</span>
+                    <span>{formatScore(assessment.supervisorScore, 10)}</span>
+                    <span>
+                      {assessment.logbookScore == null || assessment.presentationScore == null
+                        ? "Pending"
+                        : `${assessment.logbookScore + assessment.presentationScore} / 60`}
+                    </span>
+                    <span>{assessment.isComplete ? `${assessment.totalScore} / 100` : "Incomplete"}</span>
+                    <span>{assessment.grade ?? "Pending"}</span>
+                    <div className="flex items-start">
+                      <StatusBadge
+                        label={assessment.isFinalized ? "Finalized" : assessment.isComplete ? "Ready" : "Open"}
+                        variant={
+                          assessment.isFinalized
+                            ? "success"
+                            : assessment.isComplete
+                              ? "warning"
+                              : "pending"
+                        }
+                      />
+                    </div>
                   </div>
                 </Link>
               ))}
