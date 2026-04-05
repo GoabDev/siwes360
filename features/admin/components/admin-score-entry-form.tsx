@@ -58,10 +58,16 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
   }, [form, student]);
 
   const onSubmit = form.handleSubmit(async (values) => {
+    const assessmentId = student?.assessmentId;
+
+    if (!assessmentId) {
+      return;
+    }
+
     try {
       await toast.promise(
         submitMutation.mutateAsync({
-          assessmentId: student.assessmentId,
+          assessmentId,
           matricNumber,
           logbookScore: values.logbookScore,
           presentationScore: values.presentationScore,
@@ -86,7 +92,7 @@ export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) 
     );
   }
 
-  if (!studentQuery.data) {
+  if (!student) {
     return (
       <SurfaceCard>
         <p className="text-sm text-muted">No student was found for this matric number.</p>

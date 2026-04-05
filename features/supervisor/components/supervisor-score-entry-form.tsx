@@ -67,7 +67,7 @@ export function SupervisorScoreEntryForm({
     );
   }
 
-  if (!studentQuery.data) {
+  if (!student) {
     return (
       <SurfaceCard>
         <p className="text-sm text-muted">No student was found for this matric number.</p>
@@ -76,10 +76,16 @@ export function SupervisorScoreEntryForm({
   }
 
   const onSubmit = form.handleSubmit(async (values) => {
+    const assessmentId = student?.assessmentId;
+
+    if (!assessmentId) {
+      return;
+    }
+
     try {
       await toast.promise(
         submitMutation.mutateAsync({
-          assessmentId: student.assessmentId,
+          assessmentId,
           matricNumber,
           score: values.score,
           note: values.note,
