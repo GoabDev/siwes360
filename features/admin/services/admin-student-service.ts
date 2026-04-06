@@ -4,6 +4,8 @@ import axios from "axios";
 import { apiClient } from "@/lib/api/client";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
+import { AUTH_TOKEN_STORAGE_KEY } from "@/lib/auth/session-config";
+import { getDepartmentIdFromAccessToken } from "@/features/auth/utils/jwt-auth";
 import type {
   AdminScoreRecord,
   AdminStudentRecord,
@@ -94,6 +96,20 @@ const baseStudents = [
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getAdminDepartmentIdFromStoredToken() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const token = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+
+  if (!token) {
+    return null;
+  }
+
+  return getDepartmentIdFromAccessToken(token) ?? null;
 }
 
 function mapUserProfileStudentToAdminRecord(student: UserProfileStudentRecord): AdminStudentRecord {
@@ -315,8 +331,14 @@ export async function getAdminStudents(
   };
 
   if (hasConfiguredApiBaseUrl()) {
+    const departmentId = getAdminDepartmentIdFromStoredToken();
+
+    if (!departmentId) {
+      throw new Error("Unable to determine the administrator department from the current session.");
+    }
+
     const studentsResponse = await apiClient.get<PaginatedUserProfileEnvelope>(
-      apiEndpoints.userProfile.students,
+      apiEndpoints.department.studentsByDepartment(departmentId),
       {
         params: normalizedParams,
       },

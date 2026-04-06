@@ -49,7 +49,6 @@ export function StudentReportStatusCard({
       </div>
       <div className="mt-4 grid gap-3 text-sm text-muted md:grid-cols-2 xl:grid-cols-4">
         <p>File: <span className="text-foreground">{status.fileName}</span></p>
-        <p>Submission ID: <span className="text-foreground">{status.submissionId}</span></p>
         <p>Uploaded: <span className="text-foreground">{uploadedAt ? new Date(uploadedAt).toLocaleString() : "Pending"}</span></p>
         <p>Score: <span className="text-foreground">{report?.score == null ? "Pending" : `${report.score} / 100`}</span></p>
       </div>

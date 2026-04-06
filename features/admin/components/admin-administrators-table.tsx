@@ -133,7 +133,6 @@ export function AdminAdministratorsTable() {
             <div className="space-y-3 rounded-[1.2rem] border border-border/70 bg-background/60 p-4 lg:hidden">
               <div>
                 <p className="font-medium">{administrator.fullName}</p>
-                <p className="mt-1 text-xs text-muted">{administrator.id}</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
@@ -149,7 +148,6 @@ export function AdminAdministratorsTable() {
             <div className="hidden lg:grid lg:grid-cols-[1.1fr_1.3fr_1fr] lg:gap-4">
               <div>
                 <p className="font-medium">{administrator.fullName}</p>
-                <p className="mt-1 text-xs text-muted">{administrator.id}</p>
               </div>
               <span className="text-muted">{administrator.email}</span>
               <span>{administrator.department}</span>

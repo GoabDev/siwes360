@@ -1,9 +1,11 @@
 export type AdminProfile = {
+  id: string;
   fullName: string;
   email: string;
-  staffId: string;
+  imageUrl: string;
   department: string;
-  officePhone: string;
-  roleTitle: string;
-  bio: string;
+};
+
+export type UpdateAdminProfilePayload = AdminProfile & {
+  imageFile?: File | null;
 };

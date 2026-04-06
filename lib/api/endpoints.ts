@@ -13,6 +13,8 @@ export const apiEndpoints = {
   department: {
     root: "/api/Department",
     all: "/api/Department/all",
+    studentsByDepartment: (departmentId: string) => `/api/Department/${departmentId}/students`,
+    supervisorsByDepartment: (departmentId: string) => `/api/Department/${departmentId}/supervisors`,
   },
   userProfile: {
     me: "/api/UserProfile/me",

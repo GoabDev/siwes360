@@ -131,7 +131,6 @@ export function AdminStudentDetailPageView({
               ["Matric number", student.matricNumber || "N/A"],
               ["Department", student.department],
               ["Email", student.email || "N/A"],
-              ["Student ID", student.studentId ?? "N/A"],
             ].map(([label, value]) => (
               <div key={label} className="rounded-[1.2rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
                 <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">{label}</p>
@@ -167,9 +166,6 @@ export function AdminStudentDetailPageView({
             ) : (
               <StatusBadge label="Editable" variant="neutral" />
             )}
-            {student.assessmentId ? (
-              <span className="text-xs text-muted">Assessment ID: {student.assessmentId}</span>
-            ) : null}
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {[
@@ -180,7 +176,6 @@ export function AdminStudentDetailPageView({
               ["Presentation score", `${student.presentationScore ?? "Pending"} / 30`],
               ["Total", `${student.totalScore ?? "Incomplete"}${student.totalScore !== null ? " / 100" : ""}`],
               ["Grade", student.grade ?? "Pending"],
-              ["Document submission", student.documentSubmissionId ?? "Not linked"],
               ["Assessment created", student.createdAt ? new Date(student.createdAt).toLocaleString() : "N/A"],
               ["Finalized at", student.finalizedAt ? new Date(student.finalizedAt).toLocaleString() : "Not finalized"],
             ].map(([label, value]) => (

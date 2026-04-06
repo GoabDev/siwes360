@@ -13,7 +13,9 @@ type JwtPayload = {
   [authClaims.name]?: string;
   [authClaims.nameIdentifier]?: string;
   departmentId?: string;
+  DepartmentId?: string;
   departmentName?: string;
+  DepartmentName?: string;
   exp?: number;
   iss?: string;
   aud?: string;
@@ -50,6 +52,16 @@ export function decodeAccessToken(token: string) {
 export function getRoleFromAccessToken(token: string): AuthRole | undefined {
   const payload = decodeAccessToken(token);
   return normalizeBackendRole(payload[authClaims.role]);
+}
+
+export function getDepartmentIdFromAccessToken(token: string) {
+  const payload = decodeAccessToken(token);
+  return payload.departmentId ?? payload.DepartmentId;
+}
+
+export function getDepartmentNameFromAccessToken(token: string) {
+  const payload = decodeAccessToken(token);
+  return payload.departmentName ?? payload.DepartmentName;
 }
 
 export function getAccessTokenExpiry(token: string) {

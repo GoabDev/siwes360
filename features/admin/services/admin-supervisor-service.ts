@@ -3,6 +3,8 @@
 import { apiClient } from "@/lib/api/client";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
+import { AUTH_TOKEN_STORAGE_KEY } from "@/lib/auth/session-config";
+import { getDepartmentIdFromAccessToken } from "@/features/auth/utils/jwt-auth";
 import type {
   AdminSupervisorRecord,
   AdminSupervisorsQueryParams,
@@ -57,6 +59,20 @@ const mockSupervisors: AdminSupervisorRecord[] = [
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getAdminDepartmentIdFromStoredToken() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const token = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+
+  if (!token) {
+    return null;
+  }
+
+  return getDepartmentIdFromAccessToken(token) ?? null;
 }
 
 function mapSupervisor(record: SupervisorApiRecord): AdminSupervisorRecord {
@@ -115,8 +131,14 @@ export async function getAdminSupervisors(
   };
 
   if (hasConfiguredApiBaseUrl()) {
+    const departmentId = getAdminDepartmentIdFromStoredToken();
+
+    if (!departmentId) {
+      throw new Error("Unable to determine the administrator department from the current session.");
+    }
+
     const response = await apiClient.get<Envelope<PaginatedSupervisorData>>(
-      apiEndpoints.userProfile.supervisors,
+      apiEndpoints.department.supervisorsByDepartment(departmentId),
       { params: normalizedParams },
     );
 
