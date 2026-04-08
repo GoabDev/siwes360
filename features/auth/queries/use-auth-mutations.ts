@@ -5,6 +5,7 @@ import {
   confirmEmail,
   loginUser,
   requestPasswordReset,
+  resetPassword,
   registerUser,
   resendEmailVerification,
   setPassword,
@@ -43,5 +44,11 @@ export function useResendEmailVerificationMutation() {
 export function useSetPasswordMutation() {
   return useMutation({
     mutationFn: setPassword,
+  });
+}
+
+export function useResetPasswordMutation() {
+  return useMutation({
+    mutationFn: resetPassword,
   });
 }

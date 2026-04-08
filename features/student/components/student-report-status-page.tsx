@@ -5,25 +5,30 @@ import { SurfaceCard } from "@/components/ui/surface-card";
 import { StudentReportReviewPanels } from "@/features/student/components/student-report-review-panels";
 import { StudentReportStatusCard } from "@/features/student/components/student-report-status-card";
 import { StudentReportTimeline } from "@/features/student/components/student-report-timeline";
+import { StudentWorkflowChecklist } from "@/features/student/components/student-workflow-checklist";
 import {
   useStoredStudentSubmissionIdQuery,
   useStudentDocumentStatusQuery,
   useStudentValidationReportQuery,
 } from "@/features/student/queries/student-report-queries";
+import { useStudentWorkflowQuery } from "@/features/student/queries/student-workflow-queries";
 import { getApiErrorMessage } from "@/lib/api/error";
 
 export function StudentReportStatusPageView() {
   const submissionIdQuery = useStoredStudentSubmissionIdQuery();
   const statusQuery = useStudentDocumentStatusQuery(submissionIdQuery.data);
   const validationReportQuery = useStudentValidationReportQuery(submissionIdQuery.data);
+  const workflowQuery = useStudentWorkflowQuery();
 
   const status = statusQuery.data ?? null;
   const report = validationReportQuery.data ?? null;
-  const statusError = submissionIdQuery.error ?? statusQuery.error ?? validationReportQuery.error;
+  const statusError =
+    submissionIdQuery.error ?? statusQuery.error ?? validationReportQuery.error ?? workflowQuery.error;
   const isLoading =
     submissionIdQuery.isLoading ||
     statusQuery.isLoading ||
-    validationReportQuery.isLoading;
+    validationReportQuery.isLoading ||
+    workflowQuery.isLoading;
 
   return (
     <section className="space-y-6">
@@ -52,6 +57,14 @@ export function StudentReportStatusPageView() {
           isLoading={isLoading && !statusError && !status}
         />
       </SurfaceCard>
+
+      {workflowQuery.data?.steps?.length ? (
+        <StudentWorkflowChecklist
+          steps={workflowQuery.data.steps}
+          title="Workflow progress beyond document review"
+          description="This checklist tracks your progress after upload, including supervisor scoring and final admin grading."
+        />
+      ) : null}
 
       <StudentReportReviewPanels report={report} isLoading={isLoading && !statusError && !report} />
     </section>

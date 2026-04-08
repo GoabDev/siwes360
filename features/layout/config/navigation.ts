@@ -17,7 +17,7 @@ export type NavigationItem = {
   icon: NavigationIcon;
 };
 
-export const roleNavigation: Record<"student" | "supervisor" | "admin", NavigationItem[]> = {
+export const roleNavigation: Record<"student" | "supervisor" | "admin" | "superadmin", NavigationItem[]> = {
   student: [
     { href: "/student", label: "Dashboard", icon: "dashboard" },
     { href: "/student/profile", label: "Profile", icon: "profile" },
@@ -36,9 +36,17 @@ export const roleNavigation: Record<"student" | "supervisor" | "admin", Navigati
     { href: "/admin/profile", label: "Profile", icon: "profile" },
     { href: "/admin/students", label: "Students", icon: "students" },
     { href: "/admin/supervisors", label: "Supervisors", icon: "supervisors" },
-    { href: "/admin/administrators", label: "Administrators", icon: "administrators" },
-    { href: "/admin/departments", label: "Departments", icon: "departments" },
     { href: "/admin/reports", label: "Reports", icon: "upload" },
     { href: "/admin/settings", label: "Settings", icon: "settings" },
+  ],
+  superadmin: [
+    { href: "/superadmin", label: "Dashboard", icon: "dashboard" },
+    { href: "/superadmin/profile", label: "Profile", icon: "profile" },
+    { href: "/superadmin/students", label: "Students", icon: "students" },
+    { href: "/superadmin/supervisors", label: "Supervisors", icon: "supervisors" },
+    { href: "/superadmin/administrators", label: "Administrators", icon: "administrators" },
+    { href: "/superadmin/departments", label: "Departments", icon: "departments" },
+    { href: "/superadmin/reports", label: "Reports", icon: "upload" },
+    { href: "/superadmin/settings", label: "Settings", icon: "settings" },
   ],
 };

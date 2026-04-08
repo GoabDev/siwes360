@@ -2,49 +2,37 @@
 
 import { cookies } from "next/headers";
 import {
+  AUTH_ALLOWED_WHEN_AUTHENTICATED,
+  AUTH_ACCESS_COOKIE,
+  AUTH_REFRESH_COOKIE,
   AUTH_ROLE_COOKIE,
-  getRoleHome,
   type UserRole,
 } from "@/lib/auth/session-config";
 
-type CreateSessionInput = {
-  role: UserRole;
-  token?: string;
-  refreshToken?: string;
-};
+function getSessionCookieOptions(maxAge = 60 * 60 * 8) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge,
+  };
+}
 
-type SessionActionResult = {
-  role: UserRole;
-  redirectTo: string;
-  token: string;
-  refreshToken: string;
-  message: string;
-};
-
-export async function createSessionAction({
-  role,
-  token,
-  refreshToken,
-}: CreateSessionInput): Promise<SessionActionResult> {
+export async function createMockSessionAction(role: UserRole) {
   const cookieStore = await cookies();
 
-  cookieStore.set(AUTH_ROLE_COOKIE, role, {
-    httpOnly: false,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 8,
-  });
+  cookieStore.set(AUTH_ROLE_COOKIE, role, getSessionCookieOptions());
 
   return {
     role,
-    redirectTo: getRoleHome(role),
-    token: token ?? "",
-    refreshToken: refreshToken ?? "",
-    message: `${role} session created.`,
+    allowedPaths: AUTH_ALLOWED_WHEN_AUTHENTICATED,
   };
 }
 
 export async function clearSessionAction() {
   const cookieStore = await cookies();
   cookieStore.delete(AUTH_ROLE_COOKIE);
+  cookieStore.delete(AUTH_ACCESS_COOKIE);
+  cookieStore.delete(AUTH_REFRESH_COOKIE);
 }

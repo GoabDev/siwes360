@@ -17,9 +17,18 @@ import {
   useAdminSupervisorsQuery,
   useDeleteSupervisorMutation,
 } from "@/features/admin/queries/admin-supervisor-queries";
+import type { AdminWorkspaceScope } from "@/features/admin/types/admin-scope";
 import { getApiErrorMessage } from "@/lib/api/error";
 
-export function AdminSupervisorsTable() {
+type AdminSupervisorsTableProps = {
+  scope?: AdminWorkspaceScope;
+  departmentId?: string | null;
+};
+
+export function AdminSupervisorsTable({
+  scope = "department",
+  departmentId = null,
+}: AdminSupervisorsTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -32,6 +41,8 @@ export function AdminSupervisorsTable() {
     pageNumber,
     pageSize,
     searchTerm: deferredSearchTerm,
+    scope,
+    departmentId,
   });
   const deleteMutation = useDeleteSupervisorMutation();
 
@@ -59,7 +70,9 @@ export function AdminSupervisorsTable() {
         <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Supervisors</p>
         <h3 className="text-xl font-semibold">Loading supervisors</h3>
         <p className="text-sm leading-6 text-muted">
-          Please wait while we gather the current supervisor list.
+          {scope === "global"
+            ? "Please wait while we gather the current supervisor list across departments."
+            : "Please wait while we gather the current supervisor list."}
         </p>
       </SurfaceCard>
     );

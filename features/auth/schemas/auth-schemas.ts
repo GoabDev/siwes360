@@ -84,6 +84,18 @@ export const setPasswordSchema = z
     path: ["confirmPassword"],
   });
 
+export const resetPasswordSchema = z
+  .object({
+    userId: z.uuid("Reset link is missing a valid user ID."),
+    token: z.string().min(1, "Reset link is missing a valid token."),
+    password: z.string().min(8, "Password must be at least 8 characters."),
+    confirmPassword: z.string().min(8, "Confirm your password."),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+  });
+
 export type LoginSchema = z.infer<typeof loginSchema>;
 export type RegisterSchema = z.infer<typeof registerSchema>;
 export type StudentRegisterSchema = z.infer<typeof studentRegisterSchema>;
@@ -93,3 +105,4 @@ export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
 export type ConfirmEmailSchema = z.infer<typeof confirmEmailSchema>;
 export type ResendEmailVerificationSchema = z.infer<typeof resendEmailVerificationSchema>;
 export type SetPasswordSchema = z.infer<typeof setPasswordSchema>;
+export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;

@@ -22,6 +22,7 @@ export type AdminAssessmentsQueryParams = {
   pageSize?: number;
   searchTerm?: string;
   isFinalized?: boolean | null;
+  departmentId?: string | null;
 };
 
 export type PaginatedAdminAssessments = {
@@ -77,6 +78,12 @@ export type AssessmentAuditLogRecord = {
 };
 
 export type AssessmentPdfExport = {
+  blob: Blob;
+  fileName: string;
+  contentType: string;
+};
+
+export type AssessmentCsvExport = {
   blob: Blob;
   fileName: string;
   contentType: string;

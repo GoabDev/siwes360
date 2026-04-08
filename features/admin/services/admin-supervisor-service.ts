@@ -3,8 +3,6 @@
 import { apiClient } from "@/lib/api/client";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
-import { AUTH_TOKEN_STORAGE_KEY } from "@/lib/auth/session-config";
-import { getDepartmentIdFromAccessToken } from "@/features/auth/utils/jwt-auth";
 import type {
   AdminSupervisorRecord,
   AdminSupervisorsQueryParams,
@@ -61,20 +59,6 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function getAdminDepartmentIdFromStoredToken() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const token = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
-
-  if (!token) {
-    return null;
-  }
-
-  return getDepartmentIdFromAccessToken(token) ?? null;
-}
-
 function mapSupervisor(record: SupervisorApiRecord): AdminSupervisorRecord {
   const firstName = record.firstname?.trim() ?? "";
   const lastName = record.lastname?.trim() ?? "";
@@ -128,19 +112,18 @@ export async function getAdminSupervisors(
     pageNumber: params.pageNumber ?? 1,
     pageSize: params.pageSize ?? 10,
     searchTerm: params.searchTerm?.trim() ?? "",
+    scope: params.scope ?? "department",
+    departmentId: params.departmentId ?? null,
   };
 
   if (hasConfiguredApiBaseUrl()) {
-    const departmentId = getAdminDepartmentIdFromStoredToken();
-
-    if (!departmentId) {
-      throw new Error("Unable to determine the administrator department from the current session.");
-    }
-
-    const response = await apiClient.get<Envelope<PaginatedSupervisorData>>(
-      apiEndpoints.department.supervisorsByDepartment(departmentId),
-      { params: normalizedParams },
-    );
+    const response = await apiClient.get<Envelope<PaginatedSupervisorData>>(apiEndpoints.userProfile.supervisors, {
+      params: {
+        pageNumber: normalizedParams.pageNumber,
+        pageSize: normalizedParams.pageSize,
+        searchTerm: normalizedParams.searchTerm,
+      },
+    });
 
     return parsePaginatedSupervisors(response.data, normalizedParams);
   }

@@ -16,16 +16,21 @@ import {
 } from "@/features/admin/queries/admin-student-queries";
 import { getApiErrorMessage } from "@/lib/api/error";
 import { toast } from "sonner";
+import type { AdminWorkspaceScope } from "@/features/admin/types/admin-scope";
 
 type AdminStudentDetailPageViewProps = {
   matricNumber: string;
+  basePath?: string;
+  scope?: AdminWorkspaceScope;
 };
 
 export function AdminStudentDetailPageView({
   matricNumber,
+  basePath = "/admin",
+  scope = "department",
 }: AdminStudentDetailPageViewProps) {
   const decodedMatricNumber = decodeURIComponent(matricNumber);
-  const studentQuery = useAdminStudentQuery(decodedMatricNumber);
+  const studentQuery = useAdminStudentQuery(decodedMatricNumber, { scope });
   const auditLogQuery = useAssessmentAuditLogQuery(studentQuery.data?.assessmentId);
   const finalizeMutation = useFinalizeAssessmentMutation();
   const unfinalizeMutation = useUnfinalizeAssessmentMutation();
@@ -52,14 +57,18 @@ export function AdminStudentDetailPageView({
         <DashboardHero
           eyebrow="Student details"
           title="Student not found"
-          description="We could not find this student in your department list."
+          description={
+            scope === "global"
+              ? "We could not find this student in the global records."
+              : "We could not find this student in your department list."
+          }
         />
         <SurfaceCard className="space-y-4">
           <p className="text-sm text-muted">
             No student was found for matric number {decodedMatricNumber}.
           </p>
           <Button asChild variant="outline">
-            <Link href="/admin/students">Back to students</Link>
+            <Link href={`${basePath}/students`}>Back to students</Link>
           </Button>
         </SurfaceCard>
       </section>
@@ -217,7 +226,7 @@ export function AdminStudentDetailPageView({
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Button asChild variant="outline" className="w-full sm:w-auto">
-              <Link href="/admin/students">Back to students</Link>
+              <Link href={`${basePath}/students`}>Back to students</Link>
             </Button>
             {canFinalize ? (
               <Button
@@ -266,7 +275,7 @@ export function AdminStudentDetailPageView({
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Scoring</p>
           <h3 className="mt-1 text-xl font-semibold">Enter admin scores here</h3>
         </div>
-        <AdminScoreEntryForm matricNumber={student.matricNumber} />
+        <AdminScoreEntryForm matricNumber={student.matricNumber} scope={scope} />
       </section>
 
       <SurfaceCard className="space-y-4">

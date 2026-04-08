@@ -18,12 +18,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { createSessionAction } from "@/features/auth/actions/auth-session-actions";
+import { createMockSessionAction } from "@/features/auth/actions/auth-session-actions";
 import { useLoginMutation } from "@/features/auth/queries/use-auth-mutations";
 import {
   loginSchema,
   type LoginSchema,
 } from "@/features/auth/schemas/auth-schemas";
+import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
 import { getApiErrorMessage } from "@/lib/api/error";
 import { useAuthSession } from "@/providers/auth-session-provider";
 
@@ -59,15 +60,14 @@ export function LoginForm() {
 
       const authenticatedRole = result.role;
 
-      startTransition(async () => {
-        const sessionResult = await createSessionAction({
-          role: authenticatedRole,
-          token: result.token,
-          refreshToken: result.refreshToken,
-        });
+      signIn(authenticatedRole);
 
-        signIn(sessionResult.role, sessionResult.token, sessionResult.refreshToken);
-        router.push(result.redirectTo ?? sessionResult.redirectTo);
+      startTransition(async () => {
+        if (!hasConfiguredApiBaseUrl()) {
+          await createMockSessionAction(authenticatedRole);
+        }
+
+        router.push(result.redirectTo ?? "/auth/login");
       });
     } catch {
       return;

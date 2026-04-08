@@ -7,6 +7,7 @@ import type {
   AdminAssessmentsQueryParams,
   AdminFinalizePreview,
   AssessmentAuditLogRecord,
+  AssessmentCsvExport,
   AssessmentPdfExport,
   BulkFinalizeResult,
   PaginatedAdminAssessments,
@@ -118,10 +119,17 @@ export async function getAdminAssessments(
     pageSize: params.pageSize ?? 10,
     searchTerm: params.searchTerm?.trim() ?? "",
     isFinalized: params.isFinalized ?? null,
+    departmentId: params.departmentId ?? null,
   };
 
   const response = await apiClient.get<Envelope<PagedAssessmentDto>>(apiEndpoints.assessment.admin, {
-    params: normalizedParams,
+    params: {
+      pageNumber: normalizedParams.pageNumber,
+      pageSize: normalizedParams.pageSize,
+      searchTerm: normalizedParams.searchTerm,
+      isFinalized: normalizedParams.isFinalized,
+      departmentId: normalizedParams.departmentId ?? undefined,
+    },
   });
 
   const payload = response.data?.data;
@@ -136,10 +144,14 @@ export async function getAdminAssessments(
   };
 }
 
-export async function getAdminFinalizePreview(searchTerm = ""): Promise<AdminFinalizePreview> {
+export async function getAdminFinalizePreview(
+  searchTerm = "",
+  departmentId?: string | null,
+): Promise<AdminFinalizePreview> {
   const response = await apiClient.get<Envelope<FinalizePreviewDto>>(apiEndpoints.assessment.finalizePreview, {
     params: {
       searchTerm: searchTerm.trim() || undefined,
+      departmentId: departmentId ?? undefined,
     },
   });
 
@@ -164,8 +176,15 @@ export async function getAdminFinalizePreview(searchTerm = ""): Promise<AdminFin
   };
 }
 
-export async function bulkFinalizeAssessments(): Promise<BulkFinalizeResult> {
-  const response = await apiClient.post<Envelope<BulkFinalizeResultDto>>(apiEndpoints.assessment.finalizeAll, {});
+export async function bulkFinalizeAssessments(
+  departmentId?: string | null,
+): Promise<BulkFinalizeResult> {
+  const response = await apiClient.post<Envelope<BulkFinalizeResultDto>>(
+    apiEndpoints.assessment.finalizeAll,
+    {
+      departmentId: departmentId ?? undefined,
+    },
+  );
   const payload = response.data?.data;
 
   return {
@@ -199,19 +218,44 @@ export async function getAssessmentAuditLog(assessmentId: string): Promise<Asses
   }));
 }
 
-export async function exportDepartmentAssessmentPdf(): Promise<AssessmentPdfExport> {
-  const response = await apiClient.get<Blob>(apiEndpoints.assessment.exportPdf, {
-    responseType: "blob",
-  });
-
-  const contentDisposition = response.headers["content-disposition"];
+function getExportFileName(contentDisposition: unknown, fallbackFileName: string) {
   const fileNameMatch = typeof contentDisposition === "string"
     ? /filename="?([^"]+)"?/i.exec(contentDisposition)
     : null;
 
+  return fileNameMatch?.[1] ?? fallbackFileName;
+}
+
+export async function exportDepartmentAssessmentPdf(
+  departmentId?: string | null,
+): Promise<AssessmentPdfExport> {
+  const response = await apiClient.get<Blob>(apiEndpoints.assessment.exportPdf, {
+    params: {
+      departmentId: departmentId ?? undefined,
+    },
+    responseType: "blob",
+  });
+
   return {
     blob: response.data,
-    fileName: fileNameMatch?.[1] ?? "siwes-assessments.pdf",
+    fileName: getExportFileName(response.headers["content-disposition"], "siwes-assessments.pdf"),
     contentType: response.headers["content-type"] ?? "application/pdf",
+  };
+}
+
+export async function exportDepartmentAssessmentCsv(
+  departmentId?: string | null,
+): Promise<AssessmentCsvExport> {
+  const response = await apiClient.get<Blob>(apiEndpoints.assessment.exportCsv, {
+    params: {
+      departmentId: departmentId ?? undefined,
+    },
+    responseType: "blob",
+  });
+
+  return {
+    blob: response.data,
+    fileName: getExportFileName(response.headers["content-disposition"], "siwes-assessments.csv"),
+    contentType: response.headers["content-type"] ?? "text/csv; charset=utf-8",
   };
 }

@@ -9,9 +9,13 @@ import {
   submitAdminScores,
 } from "@/features/admin/services/admin-student-service";
 import type { AdminStudentsQueryParams } from "@/features/admin/types/admin-students";
+import type { AdminWorkspaceScope } from "@/features/admin/types/admin-scope";
 
 export const adminStudentsKey = (params?: AdminStudentsQueryParams) => ["admin-students", params];
-export const adminStudentKey = (matricNumber: string) => ["admin-student", matricNumber];
+export const adminStudentKey = (
+  matricNumber: string,
+  options?: { scope?: AdminWorkspaceScope; departmentId?: string | null },
+) => ["admin-student", matricNumber, options?.scope ?? "department", options?.departmentId ?? null];
 
 export function useAdminStudentsQuery(params?: AdminStudentsQueryParams) {
   return useQuery({
@@ -20,10 +24,13 @@ export function useAdminStudentsQuery(params?: AdminStudentsQueryParams) {
   });
 }
 
-export function useAdminStudentQuery(matricNumber: string) {
+export function useAdminStudentQuery(
+  matricNumber: string,
+  options?: { scope?: AdminWorkspaceScope; departmentId?: string | null },
+) {
   return useQuery({
-    queryKey: adminStudentKey(matricNumber),
-    queryFn: () => getAdminStudentByMatric(matricNumber),
+    queryKey: adminStudentKey(matricNumber, options),
+    queryFn: () => getAdminStudentByMatric(matricNumber, options),
     enabled: Boolean(matricNumber),
   });
 }

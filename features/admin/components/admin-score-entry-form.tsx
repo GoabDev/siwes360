@@ -25,13 +25,20 @@ import {
   type AdminScoreSchemaInput,
 } from "@/features/admin/schemas/admin-score-schema";
 import { getApiErrorMessage } from "@/lib/api/error";
+import type { AdminWorkspaceScope } from "@/features/admin/types/admin-scope";
 
 type AdminScoreEntryFormProps = {
   matricNumber: string;
+  scope?: AdminWorkspaceScope;
+  departmentId?: string | null;
 };
 
-export function AdminScoreEntryForm({ matricNumber }: AdminScoreEntryFormProps) {
-  const studentQuery = useAdminStudentQuery(matricNumber);
+export function AdminScoreEntryForm({
+  matricNumber,
+  scope = "department",
+  departmentId = null,
+}: AdminScoreEntryFormProps) {
+  const studentQuery = useAdminStudentQuery(matricNumber, { scope, departmentId });
   const submitMutation = useSubmitAdminScoresMutation();
 
   const form = useForm<AdminScoreSchemaInput, unknown, AdminScoreSchema>({

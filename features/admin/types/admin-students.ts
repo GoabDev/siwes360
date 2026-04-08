@@ -1,3 +1,5 @@
+import type { AdminWorkspaceScope } from "@/features/admin/types/admin-scope";
+
 export type AdminStudentRecord = {
   studentId: string | null;
   assessmentId: string | null;
@@ -29,6 +31,8 @@ export type AdminStudentsQueryParams = {
   pageNumber?: number;
   pageSize?: number;
   searchTerm?: string;
+  scope?: AdminWorkspaceScope;
+  departmentId?: string | null;
 };
 
 export type PaginatedAdminStudents = {

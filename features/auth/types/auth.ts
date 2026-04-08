@@ -1,4 +1,4 @@
-export type AuthRole = "student" | "supervisor" | "admin";
+export type AuthRole = "student" | "supervisor" | "admin" | "superadmin";
 
 export type LoginPayload = {
   identifier: string;
@@ -48,6 +48,13 @@ export type ResendEmailVerificationPayload = {
 };
 
 export type SetPasswordPayload = {
+  userId: string;
+  token: string;
+  password: string;
+  confirmPassword: string;
+};
+
+export type ResetPasswordPayload = {
   userId: string;
   token: string;
   password: string;

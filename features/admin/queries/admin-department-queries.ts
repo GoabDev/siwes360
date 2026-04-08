@@ -13,10 +13,11 @@ import type { DepartmentFormPayload } from "@/features/admin/types/admin-departm
 export const adminDepartmentsKey = ["admin-departments"];
 export const adminDepartmentKey = (id: string) => ["admin-department", id];
 
-export function useAdminDepartmentsQuery() {
+export function useAdminDepartmentsQuery(enabled = true) {
   return useQuery({
     queryKey: adminDepartmentsKey,
     queryFn: getAdminDepartments,
+    enabled,
   });
 }
 

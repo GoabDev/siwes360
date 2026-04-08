@@ -1,3 +1,5 @@
+import type { AdminWorkspaceScope } from "@/features/admin/types/admin-scope";
+
 export type AdminSupervisorRecord = {
   id: string;
   firstName: string;
@@ -12,6 +14,8 @@ export type AdminSupervisorsQueryParams = {
   pageNumber?: number;
   pageSize?: number;
   searchTerm?: string;
+  scope?: AdminWorkspaceScope;
+  departmentId?: string | null;
 };
 
 export type PaginatedAdminSupervisors = {

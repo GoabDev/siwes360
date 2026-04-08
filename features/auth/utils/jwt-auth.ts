@@ -38,6 +38,14 @@ export function normalizeBackendRole(role: string | null | undefined): AuthRole 
     return "admin";
   }
 
+  if (
+    normalizedRole === "superadmin" ||
+    normalizedRole === "super-admin" ||
+    normalizedRole === "super admin"
+  ) {
+    return "superadmin";
+  }
+
   if (normalizedRole === "supervisor") {
     return "supervisor";
   }

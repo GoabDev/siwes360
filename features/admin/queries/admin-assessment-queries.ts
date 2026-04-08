@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   bulkFinalizeAssessments,
+  exportDepartmentAssessmentCsv,
   exportDepartmentAssessmentPdf,
   getAssessmentAuditLog,
   getAdminAssessments,
@@ -11,20 +12,30 @@ import {
 import type { AdminAssessmentsQueryParams } from "@/features/admin/types/admin-assessments";
 
 export const adminAssessmentsKey = (params?: AdminAssessmentsQueryParams) => ["admin-assessments", params];
-export const adminFinalizePreviewKey = (searchTerm?: string) => ["admin-finalize-preview", searchTerm ?? ""];
+export const adminFinalizePreviewKey = (searchTerm?: string, departmentId?: string | null) => [
+  "admin-finalize-preview",
+  searchTerm ?? "",
+  departmentId ?? null,
+];
 export const adminAssessmentAuditLogKey = (assessmentId: string) => ["admin-assessment-audit-log", assessmentId];
 
-export function useAdminAssessmentsQuery(params?: AdminAssessmentsQueryParams) {
+export function useAdminAssessmentsQuery(params?: AdminAssessmentsQueryParams, enabled = true) {
   return useQuery({
     queryKey: adminAssessmentsKey(params),
     queryFn: () => getAdminAssessments(params),
+    enabled,
   });
 }
 
-export function useAdminFinalizePreviewQuery(searchTerm?: string) {
+export function useAdminFinalizePreviewQuery(
+  searchTerm?: string,
+  departmentId?: string | null,
+  enabled = true,
+) {
   return useQuery({
-    queryKey: adminFinalizePreviewKey(searchTerm),
-    queryFn: () => getAdminFinalizePreview(searchTerm),
+    queryKey: adminFinalizePreviewKey(searchTerm, departmentId),
+    queryFn: () => getAdminFinalizePreview(searchTerm, departmentId),
+    enabled,
   });
 }
 
@@ -53,5 +64,11 @@ export function useAssessmentAuditLogQuery(assessmentId: string | null | undefin
 export function useExportDepartmentAssessmentPdfMutation() {
   return useMutation({
     mutationFn: exportDepartmentAssessmentPdf,
+  });
+}
+
+export function useExportDepartmentAssessmentCsvMutation() {
+  return useMutation({
+    mutationFn: exportDepartmentAssessmentCsv,
   });
 }

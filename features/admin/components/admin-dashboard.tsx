@@ -4,9 +4,22 @@ import { DashboardHero } from "@/components/ui/dashboard-hero";
 import { StatCard } from "@/components/ui/stat-card";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { useAdminStudentsQuery } from "@/features/admin/queries/admin-student-queries";
+import type { AdminWorkspaceScope } from "@/features/admin/types/admin-scope";
 
-export function AdminDashboardView() {
-  const studentsQuery = useAdminStudentsQuery();
+type AdminDashboardViewProps = {
+  scope?: AdminWorkspaceScope;
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+};
+
+export function AdminDashboardView({
+  scope = "department",
+  eyebrow = "Admin",
+  title = "Manage department grading from one clear workspace",
+  description = "Review students, complete scores, and keep an eye on which results are nearly ready to finalize.",
+}: AdminDashboardViewProps) {
+  const studentsQuery = useAdminStudentsQuery({ scope });
   const students = studentsQuery.data?.items ?? [];
   const attentionQueue = students
     .filter((student) => student.totalScore === null || !student.isFinalized)
@@ -14,9 +27,12 @@ export function AdminDashboardView() {
 
   const stats = [
     {
-      label: "Department students",
+      label: scope === "global" ? "All students" : "Department students",
       value: `${studentsQuery.data?.totalCount ?? students.length}`,
-      detail: "Students currently available for review in your department.",
+      detail:
+        scope === "global"
+          ? "Students currently available for review across the platform."
+          : "Students currently available for review in your department.",
     },
     {
       label: "Pending admin grading",
@@ -26,16 +42,19 @@ export function AdminDashboardView() {
     {
       label: "Ready for completion",
       value: `${students.filter((student) => student.reportScore !== null && student.supervisorScore !== null).length}`,
-      detail: "Students with enough scoring progress for the final admin stage.",
+      detail:
+        scope === "global"
+          ? "Students with enough scoring progress for the final platform review stage."
+          : "Students with enough scoring progress for the final admin stage.",
     },
   ];
 
   return (
     <div className="space-y-6">
       <DashboardHero
-        eyebrow="Admin"
-        title="Manage department grading from one clear workspace"
-        description="Review students, complete scores, and keep an eye on which results are nearly ready to finalize."
+        eyebrow={eyebrow}
+        title={title}
+        description={description}
       />
       <section className="grid gap-4 md:grid-cols-3">
         {stats.map((stat) => (

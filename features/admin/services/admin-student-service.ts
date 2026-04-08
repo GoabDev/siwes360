@@ -4,8 +4,6 @@ import axios from "axios";
 import { apiClient } from "@/lib/api/client";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { hasConfiguredApiBaseUrl } from "@/lib/api/config";
-import { AUTH_TOKEN_STORAGE_KEY } from "@/lib/auth/session-config";
-import { getDepartmentIdFromAccessToken } from "@/features/auth/utils/jwt-auth";
 import type {
   AdminScoreRecord,
   AdminStudentRecord,
@@ -96,20 +94,6 @@ const baseStudents = [
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function getAdminDepartmentIdFromStoredToken() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const token = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
-
-  if (!token) {
-    return null;
-  }
-
-  return getDepartmentIdFromAccessToken(token) ?? null;
 }
 
 function mapUserProfileStudentToAdminRecord(student: UserProfileStudentRecord): AdminStudentRecord {
@@ -328,21 +312,18 @@ export async function getAdminStudents(
     pageNumber: params.pageNumber ?? 1,
     pageSize: params.pageSize ?? 10,
     searchTerm: params.searchTerm?.trim() ?? "",
+    scope: params.scope ?? "department",
+    departmentId: params.departmentId ?? null,
   };
 
   if (hasConfiguredApiBaseUrl()) {
-    const departmentId = getAdminDepartmentIdFromStoredToken();
-
-    if (!departmentId) {
-      throw new Error("Unable to determine the administrator department from the current session.");
-    }
-
-    const studentsResponse = await apiClient.get<PaginatedUserProfileEnvelope>(
-      apiEndpoints.department.studentsByDepartment(departmentId),
-      {
-        params: normalizedParams,
+    const studentsResponse = await apiClient.get<PaginatedUserProfileEnvelope>(apiEndpoints.userProfile.students, {
+      params: {
+        pageNumber: normalizedParams.pageNumber,
+        pageSize: normalizedParams.pageSize,
+        searchTerm: normalizedParams.searchTerm,
       },
-    );
+    });
 
     return parsePaginatedStudentsResponse(
       studentsResponse.data,
@@ -383,11 +364,15 @@ export async function getAdminStudents(
   };
 }
 
-export async function getAdminStudentByMatric(matricNumber: string) {
+export async function getAdminStudentByMatric(
+  matricNumber: string,
+  options: Pick<AdminStudentsQueryParams, "scope" | "departmentId"> = {},
+) {
   const students = await getAdminStudents({
     pageNumber: 1,
     pageSize: 50,
     searchTerm: matricNumber,
+    ...options,
   });
   const student =
     students.items.find((item) => item.matricNumber.toLowerCase() === matricNumber.toLowerCase()) ?? null;

@@ -1,19 +1,25 @@
-export type UserRole = "student" | "supervisor" | "admin";
+export type UserRole = "student" | "supervisor" | "admin" | "superadmin";
 
 export const AUTH_ROLE_COOKIE = "siwes360-role";
-export const AUTH_TOKEN_STORAGE_KEY = "siwes360-access-token";
-export const AUTH_REFRESH_TOKEN_STORAGE_KEY = "siwes360-refresh-token";
-export const AUTH_PROTECTED_PREFIXES = ["/student", "/supervisor", "/admin"] as const;
+export const AUTH_ACCESS_COOKIE = "siwes360-access-token";
+export const AUTH_REFRESH_COOKIE = "siwes360-refresh-token";
+export const AUTH_PROTECTED_PREFIXES = ["/student", "/supervisor", "/admin", "/superadmin"] as const;
 export const AUTH_ALLOWED_WHEN_AUTHENTICATED = ["/auth/logout"] as const;
 
 const roleHomeMap: Record<UserRole, string> = {
   student: "/student",
   supervisor: "/supervisor",
   admin: "/admin",
+  superadmin: "/superadmin",
 };
 
 export function parseUserRole(value?: string | null): UserRole | null {
-  if (value === "student" || value === "supervisor" || value === "admin") {
+  if (
+    value === "student" ||
+    value === "supervisor" ||
+    value === "admin" ||
+    value === "superadmin"
+  ) {
     return value;
   }
 
@@ -35,6 +41,10 @@ export function getRequiredRoleForPath(pathname: string): UserRole | null {
 
   if (pathname.startsWith("/admin")) {
     return "admin";
+  }
+
+  if (pathname.startsWith("/superadmin")) {
+    return "superadmin";
   }
 
   return null;

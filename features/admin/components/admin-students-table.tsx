@@ -13,8 +13,19 @@ import {
 } from "@/components/ui/select";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { useAdminStudentsQuery } from "@/features/admin/queries/admin-student-queries";
+import type { AdminWorkspaceScope } from "@/features/admin/types/admin-scope";
 
-export function AdminStudentsTable() {
+type AdminStudentsTableProps = {
+  basePath?: string;
+  scope?: AdminWorkspaceScope;
+  departmentId?: string | null;
+};
+
+export function AdminStudentsTable({
+  basePath = "/admin",
+  scope = "department",
+  departmentId = null,
+}: AdminStudentsTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -23,15 +34,21 @@ export function AdminStudentsTable() {
     pageNumber,
     pageSize,
     searchTerm: deferredSearchTerm,
+    scope,
+    departmentId,
   });
 
   if (studentsQuery.isLoading) {
     return (
       <SurfaceCard className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Students</p>
-        <h3 className="text-xl font-semibold">Loading department students</h3>
+        <h3 className="text-xl font-semibold">
+          {scope === "global" ? "Loading student records" : "Loading department students"}
+        </h3>
         <p className="text-sm leading-6 text-muted">
-          Please wait while we gather the latest student list for your department.
+          {scope === "global"
+            ? "Please wait while we gather the latest student list across all departments."
+            : "Please wait while we gather the latest student list for your department."}
         </p>
       </SurfaceCard>
     );
@@ -73,7 +90,9 @@ export function AdminStudentsTable() {
           </div>
         </div>
         <div className="rounded-[1.2rem] border border-dashed border-border bg-background/60 p-4 text-sm text-muted">
-          No students are currently available for this department.
+          {scope === "global"
+            ? "No students are currently available for this view."
+            : "No students are currently available for this department."}
         </div>
       </SurfaceCard>
     );
@@ -157,7 +176,7 @@ export function AdminStudentsTable() {
                 </p>
               </div>
               <Button asChild size="sm" variant="outline" className="w-full lg:w-auto">
-                <Link href={`/admin/students/${encodeURIComponent(student.matricNumber)}`}>
+                <Link href={`${basePath}/students/${encodeURIComponent(student.matricNumber)}`}>
                   Open record
                 </Link>
               </Button>

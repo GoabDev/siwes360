@@ -9,50 +9,44 @@ export function StudentScoresBreakdown() {
   const scoresQuery = useStudentScoresQuery();
   const scores = scoresQuery.data;
 
-  const items = [
-    { label: "Validation", value: scores?.validation, max: 100 },
-    { label: "Report", value: scores?.report, max: 30 },
-    { label: "Supervisor", value: scores?.supervisor, max: 10 },
-    { label: "Logbook", value: scores?.logbook, max: 30 },
-    { label: "Presentation", value: scores?.presentation, max: 30 },
-  ];
-
   return (
     <section className="space-y-6">
       <DashboardHero
-        eyebrow="Score breakdown"
-        title="Monitor every grading component as it becomes available"
-        description="See how each part of your SIWES assessment contributes to your final result."
+        eyebrow="Assessment progress"
+        title="Track grading progress without exposing final scores"
+        description="This page shows whether each stage of your assessment workflow has been completed."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
         <SurfaceCard className="grid gap-3 md:grid-cols-2">
           <div className="md:col-span-2">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Score details</p>
-            <h3 className="mt-1 text-xl font-semibold">How your result is built</h3>
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Assessment stages</p>
+            <h3 className="mt-1 text-xl font-semibold">How your workflow is progressing</h3>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Each section below fills in as your report moves through review.
+              Each section below updates as your report moves through validation, supervision, and admin grading.
             </p>
           </div>
           {scoresQuery.isLoading ? (
             <div className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4 text-sm text-muted md:col-span-2">
-              Loading your current assessment breakdown...
+              Loading your current assessment progress...
             </div>
           ) : null}
           {scoresQuery.error ? (
             <div className="rounded-[1.25rem] border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 md:col-span-2">
-              {getApiErrorMessage(scoresQuery.error, "Unable to load your score breakdown.")}
+              {getApiErrorMessage(scoresQuery.error, "Unable to load your assessment progress.")}
             </div>
           ) : null}
-          {items.map((item) => (
+          {[
+            { label: "Validation review", isDone: scores?.validation !== null },
+            { label: "Report review", isDone: scores?.report !== null },
+            { label: "Supervisor assessment", isDone: scores?.supervisor !== null },
+            { label: "Logbook grading", isDone: scores?.logbook !== null },
+            { label: "Presentation grading", isDone: scores?.presentation !== null },
+          ].map((item) => (
             <div key={item.label} className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">{item.label}</p>
               <p className="mt-2 text-2xl font-semibold">
-                {scoresQuery.isLoading
-                  ? `Loading / ${item.max}`
-                  : item.value == null
-                    ? `Pending / ${item.max}`
-                    : `${item.value} / ${item.max}`}
+                {scoresQuery.isLoading ? "Loading" : item.isDone ? "Completed" : "Pending"}
               </p>
             </div>
           ))}
@@ -60,22 +54,20 @@ export function StudentScoresBreakdown() {
 
         <SurfaceCard className="space-y-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Final state</p>
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Workflow state</p>
             <h3 className="mt-1 text-xl font-semibold">
               {scoresQuery.isLoading
-                ? "Loading result"
-                : scores?.total == null
-                  ? "Incomplete result"
-                  : `${scores.total} / 100`}
+                ? "Loading progress"
+                : scores?.status === "complete"
+                  ? "Assessment complete"
+                  : "Assessment in progress"}
             </h3>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Grade</p>
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">Student visibility</p>
               <p className="mt-2 text-lg font-semibold">
-                {scoresQuery.isLoading
-                  ? "Loading"
-                  : scores?.grade ?? (scores?.isFinalized ? "Pending" : "Not finalized")}
+                {scoresQuery.isLoading ? "Loading" : "Final scores hidden"}
               </p>
             </div>
             <div className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
@@ -87,8 +79,8 @@ export function StudentScoresBreakdown() {
           </div>
           <p className="text-sm leading-6 text-muted">
             {scores?.status === "complete"
-              ? "All grading components are available."
-              : "Your final result will stay incomplete until all scoring stages are done."}
+              ? "All grading components have been completed, but final scores are not shown on the student portal."
+              : "Your workflow remains in progress until all grading stages are done."}
           </p>
         </SurfaceCard>
       </div>

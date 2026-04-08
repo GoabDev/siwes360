@@ -8,3 +8,15 @@ export const apiConfig = {
 export function hasConfiguredApiBaseUrl() {
   return Boolean(apiConfig.baseURL);
 }
+
+export function getConfiguredApiOrigin() {
+  if (!apiConfig.baseURL) {
+    return null;
+  }
+
+  try {
+    return new URL(apiConfig.baseURL).origin;
+  } catch {
+    return null;
+  }
+}

@@ -7,7 +7,8 @@ export const apiEndpoints = {
     refresh: "/api/Authentication/refresh",
     revoke: "/api/Authentication/revoke",
     inviteSupervisor: "/api/Authentication/invite-supervisor",
-    forgotPassword: "/auth/forgot-password",
+    forgotPassword: "/api/Authentication/forgot-password",
+    resetPassword: "/api/Authentication/reset-password",
     setPassword: "/api/Authentication/set-password",
   },
   department: {
@@ -46,6 +47,7 @@ export const apiEndpoints = {
     finalizePreview: "/api/Assessment/finalize-preview",
     auditLog: (assessmentId: string) => `/api/Assessment/${assessmentId}/audit-log`,
     exportPdf: "/api/Assessment/admin/export-pdf",
+    exportCsv: "/api/Assessment/admin/export-csv",
   },
   student: {
     profile: "/students/profile",

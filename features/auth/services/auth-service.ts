@@ -4,6 +4,7 @@ import type {
   ForgotPasswordPayload,
   LoginPayload,
   RegisterPayload,
+  ResetPasswordPayload,
   ResendEmailVerificationPayload,
   SetPasswordPayload,
 } from "@/features/auth/types/auth";
@@ -26,6 +27,10 @@ function wait(ms: number) {
 function inferRoleFromIdentifier(identifier: string): AuthRole {
   const normalizedIdentifier = identifier.toLowerCase();
 
+  if (normalizedIdentifier.includes("superadmin") || normalizedIdentifier.includes("super-admin")) {
+    return "superadmin";
+  }
+
   if (normalizedIdentifier.includes("admin")) {
     return "admin";
   }
@@ -38,6 +43,10 @@ function inferRoleFromIdentifier(identifier: string): AuthRole {
 }
 
 function getRoleLabel(role: AuthRole) {
+  if (role === "superadmin") {
+    return "super admin";
+  }
+
   if (role === "admin") {
     return "admin";
   }
@@ -134,16 +143,15 @@ export async function loginUser(payload: LoginPayload): Promise<AuthResponse> {
       payload,
     );
     const { message, data } = unwrapEnvelope<LoginApiPayload>(response.data);
-    const token = data?.accessToken ?? data?.token;
-    const role = token
-      ? getRoleFromAccessToken(token)
-      : normalizeNumericOrStringRole(data?.role);
+    const role = data?.role
+      ? normalizeNumericOrStringRole(data.role)
+      : data?.accessToken || data?.token
+        ? getRoleFromAccessToken(data.accessToken ?? data.token ?? "")
+        : undefined;
 
     return {
       message: getFallbackMessage(message, data?.message, "Login successful.") ?? "Login successful.",
       role,
-      token,
-      refreshToken: data?.refreshToken,
       redirectTo: role ? getRoleHome(role) : undefined,
     };
   }
@@ -304,6 +312,37 @@ export async function setPassword(
 
   return {
     message: "Password created locally. Backend invite completion will replace this fallback.",
+    redirectTo: "/auth/login",
+  };
+}
+
+export async function resetPassword(
+  payload: ResetPasswordPayload,
+): Promise<AuthResponse> {
+  if (hasConfiguredApiBaseUrl()) {
+    const response = await apiClient.post<ApiEnvelope<AuthResponse> | AuthResponse>(
+      apiEndpoints.auth.resetPassword,
+      {
+        userId: payload.userId,
+        token: payload.token,
+        newPassword: payload.password,
+      },
+    );
+    const { message, data } = unwrapEnvelope<AuthResponse>(response.data);
+
+    return {
+      ...data,
+      message:
+        getFallbackMessage(message, data?.message, "Password reset successfully.") ??
+        "Password reset successfully.",
+      redirectTo: data?.redirectTo ?? "/auth/login",
+    };
+  }
+
+  await wait(800);
+
+  return {
+    message: "Password reset completed locally. Backend reset flow will replace this fallback.",
     redirectTo: "/auth/login",
   };
 }

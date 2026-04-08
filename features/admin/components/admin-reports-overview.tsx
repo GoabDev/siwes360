@@ -1,7 +1,8 @@
 "use client";
 
-import { useDeferredValue, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import Link from "next/link";
+import { Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,37 +19,124 @@ import {
   useAdminAssessmentsQuery,
   useAdminFinalizePreviewQuery,
   useBulkFinalizeAssessmentsMutation,
+  useExportDepartmentAssessmentCsvMutation,
   useExportDepartmentAssessmentPdfMutation,
 } from "@/features/admin/queries/admin-assessment-queries";
+import { useAdminDepartmentsQuery } from "@/features/admin/queries/admin-department-queries";
+import { SuperAdminDepartmentGate } from "@/features/admin/components/superadmin-department-gate";
+import type { AdminWorkspaceScope } from "@/features/admin/types/admin-scope";
 import { getApiErrorMessage } from "@/lib/api/error";
+
+const SUPERADMIN_REPORTS_DEPARTMENT_KEY = "siwes360-superadmin-reports-department";
 
 function formatScore(value: number | null, max: number) {
   return value == null ? `Pending / ${max}` : `${value} / ${max}`;
 }
 
-export function AdminReportsOverview() {
+type AdminReportsOverviewProps = {
+  basePath?: string;
+  scope?: AdminWorkspaceScope;
+};
+
+function downloadExport(blob: Blob, fileName: string) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+export function AdminReportsOverview({
+  basePath = "/admin",
+  scope = "department",
+}: AdminReportsOverviewProps) {
+  const [isDepartmentGateVisible, setIsDepartmentGateVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [finalizedFilter, setFinalizedFilter] = useState<"all" | "finalized" | "open">("all");
+  const [departmentId, setDepartmentId] = useState<string>(() => {
+    if (scope !== "global" || typeof window === "undefined") {
+      return "";
+    }
+
+    return window.sessionStorage.getItem(SUPERADMIN_REPORTS_DEPARTMENT_KEY) ?? "";
+  });
   const deferredSearchTerm = useDeferredValue(searchTerm);
   const isFinalized =
     finalizedFilter === "all" ? null : finalizedFilter === "finalized";
+
+  useEffect(() => {
+    if (scope !== "global" || typeof window === "undefined") {
+      return;
+    }
+
+    if (departmentId) {
+      window.sessionStorage.setItem(SUPERADMIN_REPORTS_DEPARTMENT_KEY, departmentId);
+      return;
+    }
+
+    window.sessionStorage.removeItem(SUPERADMIN_REPORTS_DEPARTMENT_KEY);
+  }, [departmentId, scope]);
+
+  const departmentsQuery = useAdminDepartmentsQuery(scope === "global");
+  const hasDepartmentOptions = (departmentsQuery.data?.length ?? 0) > 0;
+  const hasValidSelectedDepartment =
+    scope !== "global" ||
+    !hasDepartmentOptions ||
+    (departmentsQuery.data ?? []).some((department) => department.id === departmentId);
+  const effectiveDepartmentId =
+    scope === "global" && hasValidSelectedDepartment ? departmentId : "";
+  const effectiveSelectedDepartmentId =
+    scope === "global" ? effectiveDepartmentId || null : null;
+  const canRunEffectiveDepartmentScopedQueries =
+    scope === "global" ? Boolean(effectiveSelectedDepartmentId) : true;
 
   const assessmentsQuery = useAdminAssessmentsQuery({
     pageNumber,
     pageSize,
     searchTerm: deferredSearchTerm,
     isFinalized,
-  });
-  const previewQuery = useAdminFinalizePreviewQuery(deferredSearchTerm);
+    departmentId: effectiveSelectedDepartmentId,
+  }, canRunEffectiveDepartmentScopedQueries);
+  const previewQuery = useAdminFinalizePreviewQuery(
+    deferredSearchTerm,
+    effectiveSelectedDepartmentId,
+    canRunEffectiveDepartmentScopedQueries,
+  );
   const bulkFinalizeMutation = useBulkFinalizeAssessmentsMutation();
   const exportPdfMutation = useExportDepartmentAssessmentPdfMutation();
+  const exportCsvMutation = useExportDepartmentAssessmentCsvMutation();
+
+  useEffect(() => {
+    if (scope !== "global" || typeof window === "undefined" || hasValidSelectedDepartment) {
+      return;
+    }
+
+    window.sessionStorage.removeItem(SUPERADMIN_REPORTS_DEPARTMENT_KEY);
+  }, [hasValidSelectedDepartment, scope]);
+
+  function handleDepartmentSelection(nextDepartmentId: string) {
+    setDepartmentId(nextDepartmentId);
+    setPageNumber(1);
+    setIsDepartmentGateVisible(false);
+  }
 
   async function handleBulkFinalize() {
+    if (scope === "global" && !effectiveSelectedDepartmentId) {
+      toast.error("Select a department before finalizing assessments.");
+      return;
+    }
+
     try {
-      await toast.promise(bulkFinalizeMutation.mutateAsync(), {
-        loading: "Finalizing department assessments...",
+      await toast.promise(bulkFinalizeMutation.mutateAsync(effectiveSelectedDepartmentId), {
+        loading:
+          scope === "global"
+            ? "Finalizing selected assessments..."
+            : "Finalizing department assessments...",
         success: (data) =>
           `Finalized ${data.finalizedCount} assessment${data.finalizedCount === 1 ? "" : "s"}.`,
         error: (error) => getApiErrorMessage(error, "Unable to bulk finalize assessments."),
@@ -59,18 +147,16 @@ export function AdminReportsOverview() {
   }
 
   async function handleExportPdf() {
+    if (scope === "global" && !effectiveSelectedDepartmentId) {
+      toast.error("Select a department before exporting assessment PDFs.");
+      return;
+    }
+
     try {
-      await toast.promise(exportPdfMutation.mutateAsync(), {
+      await toast.promise(exportPdfMutation.mutateAsync(effectiveSelectedDepartmentId), {
         loading: "Generating assessment PDF...",
         success: (data) => {
-          const url = window.URL.createObjectURL(data.blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = data.fileName;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(url);
+          downloadExport(data.blob, data.fileName);
           return "Assessment PDF exported successfully.";
         },
         error: (error) => getApiErrorMessage(error, "Unable to export assessment PDF."),
@@ -80,7 +166,31 @@ export function AdminReportsOverview() {
     }
   }
 
-  if (assessmentsQuery.isLoading || previewQuery.isLoading) {
+  async function handleExportCsv() {
+    if (scope === "global" && !effectiveSelectedDepartmentId) {
+      toast.error("Select a department before exporting assessment CSV.");
+      return;
+    }
+
+    try {
+      await toast.promise(exportCsvMutation.mutateAsync(effectiveSelectedDepartmentId), {
+        loading: "Generating assessment CSV...",
+        success: (data) => {
+          downloadExport(data.blob, data.fileName);
+          return "Assessment CSV exported successfully.";
+        },
+        error: (error) => getApiErrorMessage(error, "Unable to export assessment CSV."),
+      });
+    } catch {
+      return;
+    }
+  }
+
+  if (
+    assessmentsQuery.isLoading ||
+    previewQuery.isLoading ||
+    (scope === "global" && departmentsQuery.isLoading)
+  ) {
     return (
       <SurfaceCard className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Reports overview</p>
@@ -94,14 +204,47 @@ export function AdminReportsOverview() {
 
   const assessments = assessmentsQuery.data?.items ?? [];
   const preview = previewQuery.data;
+  const isDepartmentGateOpen =
+    scope === "global" &&
+    !departmentsQuery.isLoading &&
+    (!effectiveSelectedDepartmentId || isDepartmentGateVisible);
 
   return (
     <div className="space-y-4">
+      <SuperAdminDepartmentGate
+        key={`superadmin-reports-gate-${effectiveDepartmentId || "unselected"}`}
+        departments={departmentsQuery.data ?? []}
+        isLoading={departmentsQuery.isLoading}
+        isOpen={isDepartmentGateOpen}
+        selectedDepartmentId={effectiveDepartmentId}
+        onSelectDepartment={handleDepartmentSelection}
+        onClose={effectiveSelectedDepartmentId ? () => setIsDepartmentGateVisible(false) : undefined}
+      />
+
       <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <SurfaceCard className="space-y-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-brand">Finalization overview</p>
-            <h3 className="mt-1 text-xl font-semibold">Department assessment readiness</h3>
+            <h3 className="mt-1 text-xl font-semibold">
+              {scope === "global" ? "Assessment readiness by scope" : "Department assessment readiness"}
+            </h3>
+            {scope === "global" && effectiveSelectedDepartmentId ? (
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/8 px-3 py-1 text-sm font-medium text-foreground">
+                  <Building2 className="h-4 w-4 text-brand" />
+                  {(departmentsQuery.data ?? []).find((department) => department.id === effectiveSelectedDepartmentId)?.name ??
+                    "Selected department"}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsDepartmentGateVisible(true)}
+                >
+                  Switch department
+                </Button>
+              </div>
+            ) : null}
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-[1.25rem] border border-border/70 bg-background/60 p-4">
@@ -121,7 +264,11 @@ export function AdminReportsOverview() {
             <Button
               type="button"
               onClick={handleBulkFinalize}
-              disabled={bulkFinalizeMutation.isPending || Boolean(preview?.incompleteCount)}
+              disabled={
+                bulkFinalizeMutation.isPending ||
+                Boolean(preview?.incompleteCount) ||
+                (scope === "global" && !effectiveSelectedDepartmentId)
+              }
             >
               {bulkFinalizeMutation.isPending ? "Finalizing..." : "Finalize ready assessments"}
             </Button>
@@ -129,13 +276,26 @@ export function AdminReportsOverview() {
               type="button"
               variant="outline"
               onClick={handleExportPdf}
-              disabled={exportPdfMutation.isPending}
+              disabled={exportPdfMutation.isPending || (scope === "global" && !effectiveSelectedDepartmentId)}
             >
               {exportPdfMutation.isPending ? "Exporting..." : "Export PDF"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleExportCsv}
+              disabled={exportCsvMutation.isPending || (scope === "global" && !effectiveSelectedDepartmentId)}
+            >
+              {exportCsvMutation.isPending ? "Exporting..." : "Export CSV"}
             </Button>
             {preview?.incompleteCount ? (
               <p className="text-sm text-muted">
                 Some assessments still need attention before you can finalize them together.
+              </p>
+            ) : null}
+            {scope === "global" && !effectiveSelectedDepartmentId ? (
+              <p className="text-sm text-muted">
+                Choose a department to finalize its ready assessments in bulk.
               </p>
             ) : null}
           </div>
@@ -197,6 +357,36 @@ export function AdminReportsOverview() {
             className="max-w-xl"
           />
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
+            {scope === "global" ? (
+              <>
+                <Select
+                  value={effectiveDepartmentId}
+                  onValueChange={(value) => {
+                    handleDepartmentSelection(value);
+                  }}
+                >
+                  <SelectTrigger className="w-52">
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(departmentsQuery.data ?? []).map((department) => (
+                      <SelectItem key={department.id} value={department.id}>
+                        {department.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsDepartmentGateVisible(true)}
+                >
+                  <Building2 className="h-4 w-4" />
+                  Change department
+                </Button>
+              </>
+            ) : null}
             <Select
               value={finalizedFilter}
               onValueChange={(value: "all" | "finalized" | "open") => {
@@ -237,7 +427,13 @@ export function AdminReportsOverview() {
           </div>
         </div>
 
-        {!assessments.length ? (
+        {!effectiveSelectedDepartmentId && scope === "global" ? (
+          <div className="px-5 pb-5">
+            <div className="rounded-[1.2rem] border border-dashed border-border bg-background/60 p-4 text-sm text-muted">
+              Select a department to load assessment summaries for this super admin report view.
+            </div>
+          </div>
+        ) : !assessments.length ? (
           <div className="px-5 pb-5">
             <div className="rounded-[1.2rem] border border-dashed border-border bg-background/60 p-4 text-sm text-muted">
               No students matched your current search or filter.
@@ -259,7 +455,7 @@ export function AdminReportsOverview() {
               {assessments.map((assessment) => (
                 <Link
                   key={assessment.assessmentId}
-                  href={`/admin/students/${encodeURIComponent(assessment.matricNumber)}`}
+                  href={`${basePath}/students/${encodeURIComponent(assessment.matricNumber)}`}
                   className="block px-5 py-4 text-sm transition hover:bg-background/50"
                 >
                   <div className="overflow-hidden rounded-[1.45rem] border border-border/70 bg-[linear-gradient(180deg,_rgba(255,253,247,0.96),_rgba(255,253,247,0.82))] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] lg:hidden">

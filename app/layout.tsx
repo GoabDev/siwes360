@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { getServerSessionRole } from "@/lib/auth/server-session";
 import { AppProviders } from "@/providers/app-providers";
 import "./globals.css";
 
@@ -22,17 +23,19 @@ export const metadata: Metadata = {
     "A SIWES management and grading frontend for students, supervisors, and departmental administrators.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialRole = await getServerSessionRole();
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AppProviders>{children}</AppProviders>
+        <AppProviders initialRole={initialRole}>{children}</AppProviders>
       </body>
     </html>
   );

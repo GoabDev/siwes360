@@ -29,7 +29,7 @@ export function StudentReportReviewPanels({
         <SectionHeading
           eyebrow="Review results"
           title="No report under review"
-          description="Upload a SIWES report to start seeing checks, feedback, and scores here."
+          description="Upload a SIWES report to start seeing checks and feedback here."
         />
       </SurfaceCard>
     );
@@ -55,16 +55,13 @@ export function StudentReportReviewPanels({
     <SurfaceCard>
       <SectionHeading
         eyebrow="Validation"
-        title="Score, checks, and rule feedback"
-        description="See your overall validation result and review each formatting check in one place."
+        title="Checks and rule feedback"
+        description="See your validation status and review each formatting check in one place."
       />
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         {[
           { label: "Validation status", value: report.status },
-          {
-            label: "Report score",
-            value: report.score == null ? "Awaiting review" : `${report.score} / 100`,
-          },
+          { label: "Review outcome", value: report.score == null ? "Awaiting review" : "Reviewed" },
           { label: "Passed rules", value: `${passedRules.length}` },
           { label: "Warnings", value: `${warningRules.length}` },
           { label: "Failed rules", value: `${failedRules.length}` },

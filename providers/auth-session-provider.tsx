@@ -4,29 +4,26 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
-  useSyncExternalStore,
+  useState,
   type ReactNode,
 } from "react";
 import type { UserRole } from "@/lib/auth/session-config";
 import {
   clearSession,
-  getSessionSnapshot,
-  getServerSessionSnapshot,
+  initializeSession,
   persistSession,
-  subscribeToSession,
 } from "@/features/auth/utils/mock-session";
 
 type AuthSessionState = {
   role: UserRole | null;
-  token: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
   isHydrated: boolean;
 };
 
 type AuthSessionContextValue = AuthSessionState & {
-  signIn: (role: UserRole, token?: string, refreshToken?: string) => void;
+  signIn: (role: UserRole) => void;
   signOut: () => void;
 };
 
@@ -34,34 +31,36 @@ const AuthSessionContext = createContext<AuthSessionContextValue | null>(null);
 
 type AuthSessionProviderProps = {
   children: ReactNode;
+  initialRole: UserRole | null;
 };
 
-export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
-  const snapshot = useSyncExternalStore(
-    subscribeToSession,
-    getSessionSnapshot,
-    getServerSessionSnapshot,
-  );
+export function AuthSessionProvider({ children, initialRole }: AuthSessionProviderProps) {
+  const [role, setRole] = useState<UserRole | null>(initialRole);
 
-  const signIn = useCallback((role: UserRole, token?: string, refreshToken?: string) => {
-    persistSession(role, token, refreshToken);
+  useEffect(() => {
+    initializeSession(initialRole);
+    setRole(initialRole);
+  }, [initialRole]);
+
+  const signIn = useCallback((nextRole: UserRole) => {
+    persistSession(nextRole);
+    setRole(nextRole);
   }, []);
 
   const signOut = useCallback(() => {
     clearSession();
+    setRole(null);
   }, []);
 
   const value = useMemo(
     () => ({
-      role: snapshot.role,
-      token: snapshot.token,
-      refreshToken: snapshot.refreshToken,
-      isAuthenticated: Boolean(snapshot.role),
+      role,
+      isAuthenticated: Boolean(role),
       isHydrated: true,
       signIn,
       signOut,
     }),
-    [snapshot.refreshToken, snapshot.role, snapshot.token, signIn, signOut],
+    [role, signIn, signOut],
   );
 
   return <AuthSessionContext.Provider value={value}>{children}</AuthSessionContext.Provider>;

@@ -64,6 +64,7 @@ export function useUploadStudentDocumentMutation() {
       queryClient.setQueryData<string | null>(studentDocumentSubmissionKey, data.submissionId);
       queryClient.removeQueries({ queryKey: ["student-document-status"] });
       queryClient.removeQueries({ queryKey: ["student-validation-report"] });
+      queryClient.invalidateQueries({ queryKey: ["student-workflow"] });
       queryClient.setQueryData<StudentDocumentStatus | null>(
         studentDocumentStatusKey(data.submissionId),
         null,
