@@ -28,6 +28,7 @@ import {
 } from "@/features/admin/queries/admin-profile-queries";
 import { getApiErrorMessage } from "@/lib/api/error";
 import type { UpdateAdminProfilePayload } from "@/features/admin/types/admin-profile";
+import type { AdminWorkspaceScope } from "@/features/admin/types/admin-scope";
 
 const defaultValues: AdminProfileSchema = {
   fullName: "",
@@ -49,11 +50,18 @@ function getInitials(name: string) {
   return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
 }
 
-export function AdminProfileForm() {
+type AdminProfileFormProps = {
+  scope?: AdminWorkspaceScope;
+};
+
+export function AdminProfileForm({
+  scope = "department",
+}: AdminProfileFormProps) {
   const profileQuery = useAdminProfileQuery();
   const updateProfileMutation = useUpdateAdminProfileMutation();
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const showDepartment = scope !== "global";
 
   const form = useForm<AdminProfileSchema>({
     resolver: zodResolver(adminProfileSchema),
@@ -151,14 +159,18 @@ export function AdminProfileForm() {
                 Keep your administrator profile up to date
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-                Make sure your name, image, and department details are correct across the admin workspace.
+                {showDepartment
+                  ? "Make sure your name, image, and department details are correct across the admin workspace."
+                  : "Make sure your name and image are correct across the super admin workspace."}
               </p>
             </div>
           </div>
           <div className="rounded-[1.5rem] border border-white/50 bg-white/55 px-4 py-3 text-sm text-foreground/90 backdrop-blur">
             <p className="font-medium">{profileQuery.data?.fullName || "Admin profile"}</p>
             <p className="mt-1 text-muted">{profileQuery.data?.email || "Email not available"}</p>
-            <p className="mt-1 text-muted">{profileQuery.data?.department || "Department not set"}</p>
+            {showDepartment ? (
+              <p className="mt-1 text-muted">{profileQuery.data?.department || "Department not set"}</p>
+            ) : null}
             <p className="mt-1 text-muted">
               {selectedImageFile
                 ? `Ready to upload: ${selectedImageFile.name}`
@@ -183,7 +195,11 @@ export function AdminProfileForm() {
             <SectionHeading
               eyebrow="Identity"
               title="Your personal information"
-              description="Update the details attached to your administrator account."
+              description={
+                showDepartment
+                  ? "Update the details attached to your administrator account."
+                  : "Update the details attached to your super administrator account."
+              }
             />
             <div className="grid gap-5 md:grid-cols-2">
               <FormField
@@ -212,23 +228,29 @@ export function AdminProfileForm() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="department"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Department</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Computer Science" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {showDepartment ? (
+                <FormField
+                  control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Department</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Computer Science" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : null}
             </div>
 
             <div className="flex flex-col gap-2.5 rounded-[1.25rem] border border-border/70 bg-background/60 p-4 text-sm text-muted">
-              <p>Your details are shown across the administrator workspace.</p>
+              <p>
+                {showDepartment
+                  ? "Your details are shown across the administrator workspace."
+                  : "Your details are shown across the super admin workspace."}
+              </p>
               <p>You can also add or change your profile photo here.</p>
             </div>
 
