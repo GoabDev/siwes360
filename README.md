@@ -1,55 +1,55 @@
 # SIWES 360
 
-SIWES 360 is a role-based frontend for managing the Student Industrial Work Experience Scheme workflow. It provides separate workspaces for students, supervisors, and departmental administrators, with the UI already structured for backend API handoff.
+SIWES 360 is a role-based Next.js frontend for managing the Student Industrial Work Experience Scheme workflow across students, supervisors, administrators, and super administrators.
 
-This repository is currently frontend-first. Most user flows work against mock data when `NEXT_PUBLIC_API_BASE_URL` is not configured, but the code is already organized around service, query, schema, and type layers so live backend integration only requires replacing service internals.
+The application supports a live backend integration mode and a mock-first local mode. In live mode, browser requests go through a same-origin API proxy and session cookies. In mock mode, feature services fall back to simulated data so UI work can continue without a backend.
 
 ## What The Project Covers
 
-- Public marketing landing page
-- Authentication screens for login, registration, and password reset
-- Student workspace for profile setup, report upload, report status, and score visibility
-- Supervisor workspace for profile management, student lookup, scoring, and submission review
-- Admin workspace for profile management, student monitoring, report oversight, and score entry
-- Role-protected routing for `student`, `supervisor`, and `admin`
+- Public landing and authentication flows
+- Student workspace for profile setup, report upload, report status, workflow progress, and student-safe assessment visibility
+- Supervisor workspace for student search, submission review, and score entry
+- Admin workspace for departmental monitoring, report oversight, and grading
+- Super admin workspace for global oversight, department management, administrator visibility, and department-scoped reporting
+- Role-protected routing for `student`, `supervisor`, `admin`, and `superadmin`
 
 ## Tech Stack
 
-### Core framework
+### Core
 
 - Next.js 16 with the App Router
 - React 19
-- TypeScript with `strict` mode enabled
+- TypeScript with `strict` mode
 
-### UI and styling
+### UI
 
-- Tailwind CSS 4 via `@import "tailwindcss"`
-- `tw-animate-css` for animation utilities
-- Radix UI primitives for accessible low-level UI building blocks
-- `lucide-react` for icons
-- `class-variance-authority`, `clsx`, and `tailwind-merge` for composable component variants
-- `shadcn/ui` conventions, configured in [components.json](/c:/Users/jr/Documents/siwes360/components.json)
+- Tailwind CSS 4
+- `tw-animate-css`
+- Radix UI primitives
+- `lucide-react`
+- `class-variance-authority`, `clsx`, `tailwind-merge`
+- Shared design primitives in `components/ui/`
 
 ### Data, forms, and validation
 
-- TanStack Query for server-state management
-- Axios for HTTP requests
-- React Hook Form for forms
-- Zod for schema validation
-- `@hookform/resolvers` for React Hook Form and Zod integration
-- Sonner for toast notifications
+- TanStack Query
+- Axios
+- React Hook Form
+- Zod
+- `@hookform/resolvers`
+- Sonner
 
 ### Tooling
 
-- ESLint 9 with Next.js Core Web Vitals and TypeScript rules
+- ESLint 9 with Next.js rules
 - PostCSS with `@tailwindcss/postcss`
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 20 or newer is the safe baseline for the current Next.js toolchain
-- npm is used in this repository because `package-lock.json` is committed
+- Node.js 20+
+- npm
 
 ### Install
 
@@ -59,27 +59,29 @@ npm install
 
 ### Environment
 
-Create a local environment file from [.env.example](/c:/Users/jr/Documents/siwes360/.env.example):
+Create `.env.local` from `.env.example`:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Available variable:
+Current environment variables:
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=
+NEXT_PUBLIC_API_TIMEOUT_MS=15000
 ```
 
 Behavior:
 
-- Leave it empty to run the UI against built-in mock services
-- Set it to your backend base URL to enable live Axios requests
+- Leave `NEXT_PUBLIC_API_BASE_URL` empty to run in mock mode
+- Set `NEXT_PUBLIC_API_BASE_URL` to the backend base URL to enable live API mode
 
 Example:
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
+NEXT_PUBLIC_API_BASE_URL=https://your-backend.example.com/
+NEXT_PUBLIC_API_TIMEOUT_MS=60000
 ```
 
 ### Run
@@ -90,102 +92,119 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-### Production commands
+### Other Commands
 
 ```bash
+npm run lint
 npm run build
 npm run start
-npm run lint
 ```
 
-## Current Auth And Local Development Behavior
+## Current Auth Model
 
-The app uses a temporary mock-session approach until real authentication is connected.
+The README was previously outdated here. The app no longer uses `localStorage` for access or refresh tokens.
 
-- A role cookie, `siwes360-role`, is used for route protection
-- An access token is stored in local storage under `siwes360-access-token`
-- Protected sections are:
-  - `/student/*`
-  - `/supervisor/*`
-  - `/admin/*`
+### Live backend mode
 
-In local mock mode:
+- Login and authenticated requests go through the same-origin API proxy at `app/api/[...path]/route.ts`
+- Access and refresh tokens are stored in cookies, not browser local storage
+- Protected layouts validate the session on the server through `lib/auth/server-session.ts`
+- `proxy.ts` handles route gating and auth-page redirects
+- The client Axios instance sends cookie-backed requests with `withCredentials`
 
-- login infers the role from the identifier
-- identifiers containing `admin` enter the admin workspace
-- identifiers containing `supervisor` enter the supervisor workspace
-- all other identifiers default to the student workspace
+### Mock mode
+
+- Mock services still work when `NEXT_PUBLIC_API_BASE_URL` is not configured
+- Mock auth keeps only lightweight role state for local development
+- Login infers role from the identifier:
+  - identifiers containing `superadmin` enter the super admin workspace
+  - identifiers containing `admin` enter the admin workspace
+  - identifiers containing `supervisor` enter the supervisor workspace
+  - all other identifiers default to the student workspace
+
+### Protected Sections
+
+- `/student/*`
+- `/supervisor/*`
+- `/admin/*`
+- `/superadmin/*`
 
 Relevant files:
 
-- [lib/auth/session-config.ts](/c:/Users/jr/Documents/siwes360/lib/auth/session-config.ts)
-- [lib/auth/server-session.ts](/c:/Users/jr/Documents/siwes360/lib/auth/server-session.ts)
-- [features/auth/utils/mock-session.ts](/c:/Users/jr/Documents/siwes360/features/auth/utils/mock-session.ts)
-- [features/auth/actions/auth-session-actions.ts](/c:/Users/jr/Documents/siwes360/features/auth/actions/auth-session-actions.ts)
-- [proxy.ts](/c:/Users/jr/Documents/siwes360/proxy.ts)
+- [app/api/[...path]/route.ts](app/api/[...path]/route.ts)
+- [lib/api/client.ts](lib/api/client.ts)
+- [lib/auth/server-session.ts](lib/auth/server-session.ts)
+- [lib/auth/session-config.ts](lib/auth/session-config.ts)
+- [features/auth/actions/auth-session-actions.ts](features/auth/actions/auth-session-actions.ts)
+- [features/auth/utils/mock-session.ts](features/auth/utils/mock-session.ts)
+- [proxy.ts](proxy.ts)
 
-## Architecture
+## Feature Snapshot
 
-### High-level approach
+### Public and auth
 
-The codebase uses a feature-based frontend architecture on top of the Next.js App Router.
+- Landing page
+- Login
+- Registration
+- Forgot password
+- Reset password
+- Invited-user password setup
 
-Each domain is organized so that pages remain thin and most behavior lives inside feature modules:
+### Student
 
-- `components`: presentational and container UI for a feature
-- `services`: API or mock data access
-- `queries`: TanStack Query hooks for reads and writes
-- `schemas`: Zod validation schemas
-- `types`: TypeScript contracts for the feature
-- `utils` or `constants`: feature-specific helpers and static data
+- Dashboard and workflow checklist
+- Profile management
+- Report upload
+- Report status and validation feedback
+- Student assessment progress page
+- Student score outputs are intentionally hidden; the UI now shows progress and workflow state instead of final marks
 
-This structure is a good fit here because the product is role-driven and domain-heavy. Student, supervisor, admin, auth, layout, and marketing concerns are easier to scale when each domain owns its own UI, data access, and validation logic.
+### Supervisor
 
-### Why this architecture works for this project
+- Dashboard
+- Profile management
+- Student search
+- Submission review
+- Score entry
 
-- It keeps App Router files small and easy to scan
-- It reduces coupling between UI screens and transport logic
-- It supports mock-first development while preserving clean backend handoff
-- It makes role-specific modules easier to extend independently
-- It aligns form validation, API types, and query hooks around the same feature boundary
+### Admin
 
-### Request and state flow
+- Dashboard
+- Profile management
+- Student and supervisor management views
+- Department-scoped report oversight
+- Score entry
+- PDF and CSV exports
+- Operational settings shortcuts
 
-Typical form flow in this project:
+### Super admin
 
-1. A page in `app/` renders a feature component.
-2. The feature component uses a React Hook Form form with a Zod schema.
-3. The feature component calls a query or mutation hook from `queries/`.
-4. The hook calls a service function from `services/`.
-5. The service either:
-   - calls the backend through the shared Axios client if `NEXT_PUBLIC_API_BASE_URL` exists, or
-   - returns mock data after a small simulated delay
-6. Mutations update or invalidate TanStack Query cache.
-
-You can see that pattern clearly in:
-
-- [features/student/components/student-profile-form.tsx](/c:/Users/jr/Documents/siwes360/features/student/components/student-profile-form.tsx)
-- [features/student/queries/student-profile-queries.ts](/c:/Users/jr/Documents/siwes360/features/student/queries/student-profile-queries.ts)
-- [features/student/services/student-profile-service.ts](/c:/Users/jr/Documents/siwes360/features/student/services/student-profile-service.ts)
-- [features/student/schemas/student-profile-schema.ts](/c:/Users/jr/Documents/siwes360/features/student/schemas/student-profile-schema.ts)
+- Dedicated route group and navigation
+- Global dashboard-style access
+- Administrators and departments views
+- Department-gated report workflow
+- Department switcher for report actions
 
 ## Routing Model
 
-The app uses App Router route groups to separate public and role-specific sections without affecting final URLs.
+The app uses App Router route groups to separate public and role-specific layouts without affecting public URLs.
 
 ### Route groups
 
-- `app/(public)` for marketing and auth pages
-- `app/(student)` for student routes
-- `app/(supervisor)` for supervisor routes
-- `app/(admin)` for admin routes
+- `app/(public)`
+- `app/(student)`
+- `app/(supervisor)`
+- `app/(admin)`
+- `app/(superadmin)`
 
-### Actual URL structure
+### Core URLs
 
 - `/`
 - `/auth/login`
 - `/auth/register`
 - `/auth/forgot-password`
+- `/auth/reset-password`
+- `/reset-password`
 - `/student`
 - `/student/profile`
 - `/student/upload`
@@ -202,44 +221,65 @@ The app uses App Router route groups to separate public and role-specific sectio
 - `/admin/reports`
 - `/admin/settings`
 - `/admin/score-entry/[matricNo]`
+- `/superadmin`
+- `/superadmin/profile`
+- `/superadmin/students`
+- `/superadmin/students/[matricNo]`
+- `/superadmin/supervisors`
+- `/superadmin/administrators`
+- `/superadmin/departments`
+- `/superadmin/reports`
+- `/superadmin/settings`
+- `/superadmin/score-entry/[matricNo]`
 
-### Layout strategy
+## Architecture
 
-Each role layout:
+The codebase uses a feature-based architecture on top of the App Router.
 
-- validates the required role on the server
-- injects a shared role-aware shell
-- provides role-specific navigation metadata
+Each domain generally owns:
 
-Relevant files:
+- `components`
+- `services`
+- `queries`
+- `schemas`
+- `types`
+- `utils` or constants where needed
 
-- [app/(student)/student/layout.tsx](/c:/Users/jr/Documents/siwes360/app/(student)/student/layout.tsx)
-- [app/(supervisor)/supervisor/layout.tsx](/c:/Users/jr/Documents/siwes360/app/(supervisor)/supervisor/layout.tsx)
-- [app/(admin)/admin/layout.tsx](/c:/Users/jr/Documents/siwes360/app/(admin)/admin/layout.tsx)
-- [features/layout/components/app-shell.tsx](/c:/Users/jr/Documents/siwes360/features/layout/components/app-shell.tsx)
-- [features/layout/config/navigation.ts](/c:/Users/jr/Documents/siwes360/features/layout/config/navigation.ts)
+This structure keeps route files thin and keeps transport logic, UI, and validation grouped by domain.
+
+### Current request flow
+
+Typical flow:
+
+1. A route in `app/` renders a feature component.
+2. The component uses a query or mutation hook from `features/*/queries`.
+3. The hook calls a service from `features/*/services`.
+4. In live mode, the service uses the shared client in `lib/api/client.ts`.
+5. Requests are proxied through `app/api/[...path]/route.ts`.
+6. In mock mode, the service falls back to simulated local behavior.
+7. TanStack Query manages caching and invalidation.
 
 ## Project Structure
 
 ```text
 siwes360/
-|-- app/                  # Next.js App Router entrypoints, layouts, route groups
+|-- app/                  # App Router entrypoints, route groups, layouts, API proxy
 |-- components/
 |   `-- ui/               # shared reusable UI primitives
 |-- features/
-|   |-- admin/            # admin-facing modules
-|   |-- auth/             # auth flows and session helpers
-|   |-- layout/           # shared shell, header, sidebar, navigation
-|   |-- marketing/        # landing page
-|   |-- student/          # student-facing modules
-|   `-- supervisor/       # supervisor-facing modules
+|   |-- admin/
+|   |-- auth/
+|   |-- layout/
+|   |-- marketing/
+|   |-- student/
+|   `-- supervisor/
 |-- lib/
-|   |-- api/              # Axios client, config, endpoint registry
-|   `-- auth/             # auth config and server-side guards
-|-- providers/            # app-wide React providers
-|-- public/               # static assets
-|-- proxy.ts              # route protection and auth redirects
-|-- backend_handoff.md    # API-oriented handoff notes for backend implementation
+|   |-- api/              # API config, client, endpoints
+|   `-- auth/             # session config and server-side guards
+|-- providers/            # app-wide providers
+|-- public/
+|-- proxy.ts              # route protection and redirect rules
+|-- backend_handoff.md
 `-- frontend_feature_checklist.md
 ```
 
@@ -247,218 +287,177 @@ siwes360/
 
 ### `app/`
 
-Contains route files, route-group layouts, and the global app shell entrypoint.
-
-- [app/layout.tsx](/c:/Users/jr/Documents/siwes360/app/layout.tsx) sets metadata, fonts, and root providers
-- route files are intentionally thin and usually only render feature entry components
+- `app/layout.tsx` sets global providers and root layout concerns
+- route files are intentionally thin
+- `app/api/[...path]/route.ts` is the live-mode proxy boundary between browser requests and the backend
 
 ### `features/`
 
-This is the real application core.
-
-- `features/auth`: login, registration, forgot password, session helpers
-- `features/student`: student dashboard, profile, report upload, report status, scores
-- `features/supervisor`: supervisor dashboard, search, scoring, submissions, profile
-- `features/admin`: admin dashboard, reports, students, scoring, profile, settings
-- `features/layout`: reusable authenticated shell and navigation
+- `features/auth`: auth screens, session behavior, reset-password flow
+- `features/student`: dashboard, upload, report status, workflow, student-safe assessment views
+- `features/supervisor`: search, review, scoring, profile
+- `features/admin`: dashboard, reporting, grading, departments, administrators
+- `features/layout`: shell, header, navigation, role-aware layout behavior
 - `features/marketing`: public landing page
-
-### `components/ui/`
-
-Shared low-level UI building blocks used across features. This is where buttons, inputs, form wrappers, cards, badges, and similar reusable pieces live.
 
 ### `lib/api/`
 
-Shared API infrastructure:
-
-- [lib/api/config.ts](/c:/Users/jr/Documents/siwes360/lib/api/config.ts) reads the base URL and timeout
-- [lib/api/client.ts](/c:/Users/jr/Documents/siwes360/lib/api/client.ts) creates the Axios instance and attaches the bearer token from local storage
-- [lib/api/endpoints.ts](/c:/Users/jr/Documents/siwes360/lib/api/endpoints.ts) centralizes endpoint paths
+- [lib/api/config.ts](lib/api/config.ts) reads environment-backed API settings
+- [lib/api/client.ts](lib/api/client.ts) creates the shared cookie-based Axios client
+- [lib/api/endpoints.ts](lib/api/endpoints.ts) centralizes endpoint paths
 
 ### `providers/`
 
-Global client-side wrappers:
-
-- [providers/auth-session-provider.tsx](/c:/Users/jr/Documents/siwes360/providers/auth-session-provider.tsx)
-- [providers/query-provider.tsx](/c:/Users/jr/Documents/siwes360/providers/query-provider.tsx)
-- [providers/toast-provider.tsx](/c:/Users/jr/Documents/siwes360/providers/toast-provider.tsx)
-- [providers/app-providers.tsx](/c:/Users/jr/Documents/siwes360/providers/app-providers.tsx)
+- [providers/app-providers.tsx](providers/app-providers.tsx)
+- [providers/auth-session-provider.tsx](providers/auth-session-provider.tsx)
+- [providers/query-provider.tsx](providers/query-provider.tsx)
+- [providers/toast-provider.tsx](providers/toast-provider.tsx)
 
 ## Data And API Design
 
-### Shared API client
+### Shared client
 
-All live requests should go through the shared Axios instance:
+All live feature services should use the shared client:
 
-- JSON content type is set by default
-- request timeout is `15000ms`
-- bearer token is read from local storage and attached automatically
+- requests are sent to the app-origin API proxy
+- cookies carry the authenticated session
+- the browser client does not read auth tokens directly
+- timeout is environment-configurable
 
 ### Mock-first service strategy
 
-Most services follow this pattern:
+Many feature services still support:
 
-- if a base URL exists, call the backend
-- otherwise, return static or simulated mock data
+- live backend behavior when the API base URL is configured
+- mock behavior when it is not
 
-This allows UI development to continue without blocking on backend readiness, while preserving the same call sites and type contracts.
+That allows UI development without blocking on backend availability while keeping the call sites stable.
 
-### Endpoint coverage currently defined
+### Endpoint coverage
 
-The shared endpoint map currently includes:
+The app now includes endpoint handling for more than the original auth/profile surface, including:
 
-- `POST /auth/login`
-- `POST /auth/register`
-- `POST /auth/forgot-password`
-- `GET/PUT /students/profile`
-- `GET/PUT /supervisors/profile`
-- `GET/PUT /admins/profile`
+- authentication
+- password recovery and reset
+- profile reads and updates
+- report upload and status
+- student workflow progress
+- supervisor scoring
+- admin scoring and reports
+- finalize preview
+- PDF and CSV exports
+- department and administrator management
 
-Other feature flows already exist in the UI and may use feature-local service logic pending full backend wiring. See [backend_handoff.md](/c:/Users/jr/Documents/siwes360/backend_handoff.md) for the intended integration direction.
+See [lib/api/endpoints.ts](lib/api/endpoints.ts) for the current registry.
 
 ## State Management
-
-There are two main state categories in this app:
 
 ### Server state
 
 Handled with TanStack Query.
 
-Default query behavior from [providers/query-provider.tsx](/c:/Users/jr/Documents/siwes360/providers/query-provider.tsx):
-
-- `staleTime: 60000`
-- `retry: 1` for queries
-- `refetchOnWindowFocus: false`
-- `retry: 0` for mutations
+Default behavior is configured in [providers/query-provider.tsx](providers/query-provider.tsx).
 
 ### Session state
 
-Handled through a lightweight custom auth session provider backed by:
+Handled through:
 
-- cookie storage for role-based protection
-- local storage for the access token
-- `useSyncExternalStore` for consistent client-side subscription
-
-This is intentionally simple and temporary. A real backend auth implementation can replace the storage and session semantics later without changing most feature code.
+- cookie-backed session state in live mode
+- server-validated role lookup for protected layouts
+- a lightweight client session provider for role-aware UI
+- mock-only role state when running without a backend
 
 ## Forms And Validation
 
-Forms consistently follow this stack:
+Forms consistently use:
 
-- React Hook Form for state and submission
-- Zod schemas for validation
-- `zodResolver` for integration
-- Sonner toasts for user feedback
+- React Hook Form
+- Zod
+- `zodResolver`
+- Sonner toasts
 
-This gives the project:
-
-- schema-driven validation
-- typed form payloads
-- predictable mutation handling
-- localized form rules within each feature
+This keeps validation close to each feature and aligns typed payloads with UI behavior.
 
 ## UI System
 
-The project uses a custom visual language on top of Tailwind CSS and shared UI components.
+The app uses a custom visual system built on Tailwind and shared primitives.
 
 ### Styling characteristics
 
-- design tokens are defined in [app/globals.css](/c:/Users/jr/Documents/siwes360/app/globals.css)
-- CSS variables drive color, surfaces, borders, radius, and typography
-- the palette centers on green, warm neutrals, and gold accents
-- the authenticated shell uses a shared sidebar and top header layout
+- tokens live in `app/globals.css`
+- surfaces, borders, and colors are driven by CSS variables
+- the authenticated shell uses a shared sidebar and top header
+- role workspaces reuse common shell patterns while keeping feature-specific screens separate
 
 ### Fonts
 
-The root layout loads:
+The root layout uses:
 
 - Geist Sans
 - Geist Mono
-
-## Package Reference
-
-### Runtime dependencies
-
-- `next`, `react`, `react-dom`: application runtime
-- `axios`: HTTP client for backend integration
-- `@tanstack/react-query`: query and mutation state management
-- `react-hook-form`: form state management
-- `zod`: validation and runtime schema definitions
-- `@hookform/resolvers`: Zod and form integration
-- `@radix-ui/react-label`, `@radix-ui/react-select`, `@radix-ui/react-slot`: accessible UI primitives
-- `lucide-react`: icon set
-- `sonner`: toast notifications
-- `class-variance-authority`: component variant definitions
-- `clsx`, `tailwind-merge`: class composition helpers
-- `tw-animate-css`: animation utilities for Tailwind-based UI
-
-### Development dependencies
-
-- `typescript`: typed development
-- `eslint`, `eslint-config-next`: linting
-- `tailwindcss`, `@tailwindcss/postcss`: styling pipeline
-- `@types/node`, `@types/react`, `@types/react-dom`: TypeScript types
 
 ## Development Conventions
 
 ### Import aliases
 
-The project uses the `@/*` alias from [tsconfig.json](/c:/Users/jr/Documents/siwes360/tsconfig.json), so imports are usually rooted from the repository root instead of relying on deep relative paths.
+The repository uses the `@/*` alias from `tsconfig.json`.
 
-### Where to add new code
+### Where new code should go
 
-- add routes in `app/`
-- add domain logic in the matching `features/<domain>/` folder
-- add reusable low-level UI in `components/ui/`
-- add shared infrastructure in `lib/` or `providers/`
+- routes in `app/`
+- domain logic in `features/<domain>/`
+- shared low-level UI in `components/ui/`
+- cross-cutting infrastructure in `lib/` and `providers/`
 
-### Recommended pattern for a new feature
+### Recommended feature pattern
 
 1. Add or update the route in `app/`
-2. Create the feature page component in `features/<domain>/components/`
-3. Define payload and response types in `types/`
-4. Define validation in `schemas/` if there is user input
-5. Add service functions in `services/`
-6. Wrap those services with TanStack Query hooks in `queries/`
-7. Reuse shared UI primitives from `components/ui/`
+2. Add the feature component in `features/<domain>/components/`
+3. Add or update types in `types/`
+4. Add validation in `schemas/` where needed
+5. Add service logic in `services/`
+6. Wrap reads and writes in TanStack Query hooks in `queries/`
+7. Reuse shared UI primitives instead of rebuilding low-level components
 
 ## Backend Integration Notes
 
-This frontend is already prepared for backend integration, but there are important current realities:
+This repository is no longer purely mock-session driven, but it still supports mock mode.
 
-- some flows still depend on mock data or mock session behavior
-- the backend base URL is optional, not required
-- live authentication is not fully implemented yet
-- the backend contract should preserve role values: `student`, `supervisor`, `admin`
+Current realities:
 
-The most direct integration approach is:
+- live backend mode is supported through the app proxy and cookie-backed auth
+- some features still keep mock fallbacks for local development
+- route protection expects role semantics for `student`, `supervisor`, `admin`, and `superadmin`
+- report and grading flows are increasingly aligned with the backend contract
 
-1. keep the existing feature services as the integration seam
-2. replace mock responses inside `services/` with real API calls
-3. keep response shapes aligned with current TypeScript types where possible
-4. preserve auth role semantics so route protection and redirects continue to work
+The cleanest backend integration path remains:
 
-Use [backend_handoff.md](/c:/Users/jr/Documents/siwes360/backend_handoff.md) as the backend-facing companion document.
+1. keep feature services as the integration seam
+2. preserve response shapes where possible
+3. let `lib/api/endpoints.ts` remain the central path registry
+4. keep role naming aligned with the frontend route model
 
 ## Known Gaps
 
 - No automated test suite is present yet
-- Auth is currently mock-first rather than production-grade
-- Some API endpoints are implied by the UI but not yet centralized in `lib/api/endpoints.ts`
-- Linting exists, but there are no dedicated CI, test, or storybook docs in this repository
+- Mock mode still exists for parts of the product and should not be treated as production auth
+- Some documentation outside this README may still lag behind recent changes
+- Build behavior can still depend on external font fetching in restricted environments
 
 ## Important Files To Read First
 
-If you are onboarding to this project, start here:
+If you are onboarding to the current codebase, start with:
 
-1. [package.json](/c:/Users/jr/Documents/siwes360/package.json)
-2. [app/layout.tsx](/c:/Users/jr/Documents/siwes360/app/layout.tsx)
-3. [proxy.ts](/c:/Users/jr/Documents/siwes360/proxy.ts)
-4. [features/layout/config/navigation.ts](/c:/Users/jr/Documents/siwes360/features/layout/config/navigation.ts)
-5. [providers/app-providers.tsx](/c:/Users/jr/Documents/siwes360/providers/app-providers.tsx)
-6. [lib/api/client.ts](/c:/Users/jr/Documents/siwes360/lib/api/client.ts)
-7. [backend_handoff.md](/c:/Users/jr/Documents/siwes360/backend_handoff.md)
+1. [package.json](package.json)
+2. [app/layout.tsx](app/layout.tsx)
+3. [app/api/[...path]/route.ts](app/api/[...path]/route.ts)
+4. [proxy.ts](proxy.ts)
+5. [lib/auth/server-session.ts](lib/auth/server-session.ts)
+6. [features/layout/config/navigation.ts](features/layout/config/navigation.ts)
+7. [providers/app-providers.tsx](providers/app-providers.tsx)
+8. [lib/api/endpoints.ts](lib/api/endpoints.ts)
+9. [backend_handoff.md](backend_handoff.md)
 
 ## Summary
 
-SIWES 360 is a structured Next.js frontend for a three-role SIWES workflow. The repository is already organized in a way that supports scale: route groups for role separation, feature-based modules for domain ownership, shared providers for cross-cutting concerns, and a mock-first service layer that can be replaced with live backend integration with limited UI churn.
+SIWES 360 is now a four-role Next.js frontend with a feature-based structure, cookie-backed live auth flow, super admin support, department-gated reporting, and mock fallbacks for local development. The codebase is organized so that backend integration, role-specific expansion, and UI iteration can continue without rewriting the overall architecture.
